@@ -1,3 +1,4 @@
+#include <cassert>
 #include <vector>
 #include <string.hpp>
 
@@ -64,6 +65,7 @@ consteval void constructors() noexcept {
 		static_assert(local_string{std::move(local_string{cstr, gstd::allocator_arguments, "Custom"})}.allocator().init == "Custom");
 	}
 	{
+		constexpr local_string s{"Test"};
 		auto test = [](auto const & s) {
 			if(s.size() != 10)
 				return false;
@@ -84,7 +86,6 @@ consteval void constructors() noexcept {
 		static_assert(test(sstr_t{"AAAAAAAAAA", 10}));
 		static_assert(test(sstr_t{(char const *) "AAAAAAAAAA"}));
 		static_assert(test(sstr_t{"AAAAAAAAAA"}));
-		constexpr local_string s{"Test"};
 		constexpr local_string<256, custom_allocator> cstr{10, 'A'};
 		constexpr local_string<256, custom_allocator> cstr2{10, 'A', gstd::allocator_arguments, "Custom"};
 		constexpr local_string cstr3{cstr2};
@@ -104,9 +105,36 @@ consteval void constructors() noexcept {
 		static_assert(local_string{std::move(local_string{cstr})}.allocator().init == "Default");
 		static_assert(test(local_string{std::move(local_string{cstr2})}));
 		static_assert(local_string{std::move(local_string{cstr, gstd::allocator_arguments, "Custom"})}.allocator().init == "Custom");
+		static_assert(test(lstr_t{std::move(local_string{cstr})}));
+		static_assert(test(sstr_t{std::move(local_string{cstr})}));
 	}
+}
+
+consteval void assignments() noexcept {
+	using gstd::local_string;
+	using lstr_t = local_string<256>;
+	using sstr_t = local_string<1>;
+	lstr_t lstr, lstr1{"Long  1"}, lstr2{"Long  2"};
+	sstr_t sstr, sstr1{"Short 1"}, sstr2{"Short 2"};
+	local_string<256, custom_allocator> lcstr{"Custom", gstd::allocator_arguments, "Custom"};
+	local_string<  1, custom_allocator> scstr{"Custom", gstd::allocator_arguments, "Custom"};
+	assert(&(lstr = lstr1) == &lstr && lstr == "Long  1" && lstr1 == "Long  1" && lstr2 == "Long  2");
+	assert(&(lstr = lstr2) == &lstr && lstr == "Long  2" && lstr1 == "Long  1" && lstr2 == "Long  2");
+	assert(&(sstr = sstr1) == &sstr && sstr == "Short 1" && sstr1 == "Short 1" && sstr2 == "Short 2");
+	assert(&(sstr = sstr2) == &sstr && sstr == "Short 2" && sstr1 == "Short 1" && sstr2 == "Short 2");
+	assert(&(lstr = std::move(lstr1)) == &lstr && lstr == "Long  1" && lstr1 == "" && lstr2 == "Long  2");
+	assert(&(sstr = std::move(sstr1)) == &sstr && sstr == "Short 1" && sstr1 == "" && sstr2 == "Short 2");
+	assert((lstr = lcstr) == "Custom" && lcstr == "Custom");
+	assert((sstr = scstr) == "Custom" && scstr == "Custom");
+	assert((clear(lstr), lstr == ""));
+	assert((clear(sstr), sstr == ""));
+	assert((lstr = std::move(lcstr)) == "Custom" && lcstr == "Custom");
+	assert((sstr = std::move(scstr)) == "Custom" && scstr == "Custom");
+	assert((local_string{std::move(lcstr)}, lcstr == ""));
+	assert((local_string{std::move(scstr)}, scstr == ""));
 }
 
 int main() {
 	constructors();
+	assignments();
 }
