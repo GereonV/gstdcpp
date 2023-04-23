@@ -9,6 +9,10 @@
 // TODO numeric conversion
 
 namespace gstd::string {
+	namespace detail {
+		template<typename, typename> inline constexpr auto is_same = false;
+		template<typename T> inline constexpr auto is_same<T, T> = true;
+	}
 
 	// pray to the optimizer
 	constexpr void cpyfwd(char * dst, char const * src, size_t amt) noexcept {
@@ -27,42 +31,6 @@ namespace gstd::string {
 		for(auto end = dst + amt; dst != end; ++dst)
 			*dst = c;
 	}
-
-	class allocator {
-	public:
-		[[nodiscard]] static constexpr allocation_result<char> allocate(size_t count) {
-			if consteval {
-				return {new char[count], count};
-			} else {
-				auto [ptr, size] = do_allocation(count);
-				if(!ptr) throw;
-				return {static_cast<char *>(ptr), size};
-			}
-		}
-
-		static constexpr void reallocate(char * & ptr, size_t old_count, size_t new_count) {
-			if consteval {
-				auto new_ptr = new char[new_count];
-				auto copy_count = old_count > new_count ? new_count : old_count; // min
-				for(size_t i{}; i < copy_count; ++i)
-					new_ptr[i] = ptr[i];
-				delete[] ptr;
-				ptr = new_ptr;
-			} else {
-				auto new_ptr = do_reallocation(ptr, new_count);
-				if(!new_ptr) throw;
-				ptr = static_cast<char *>(new_ptr);
-			}
-		}
-
-		static constexpr void deallocate(char * ptr, size_t) noexcept {
-			if consteval {
-				delete[] ptr;
-			} else {
-				do_deallocation(ptr);
-			}
-		}
-	};
 
 	inline constexpr auto npos = static_cast<size_t>(-1);
 
@@ -123,7 +91,7 @@ namespace gstd::string {
 
 		template<typename... T>
 		constexpr local_string(char const * source, allocator_arguments_marker, T &&... args)
-			: local_string{std::string_view{source}, static_cast<T &&>(args)...} {}
+			: local_string{std::string_view{source}, allocator_arguments, static_cast<T &&>(args)...} {}
 
 		template<typename... T>
 		constexpr local_string(char const * source, size_t size, allocator_arguments_marker, T &&... args)
@@ -132,11 +100,13 @@ namespace gstd::string {
 			  }, static_cast<T &&>(args)...} {}
 
 		template<size_t M, typename... T>
-		constexpr local_string(char const (& source)[M], allocator_arguments_marker, T &&... args) noexcept(M <= N && noexcept(Allocator{static_cast<T &&>(args)...}))
-			: local_string{source, M - 1, allocator_arguments} {}
+		constexpr local_string(auto const & source, allocator_arguments_marker, T &&... args) noexcept(M <= N && noexcept(Allocator{static_cast<T &&>(args)...}))
+			requires detail::is_same<decltype(source), char const (&)[M]>
+			: local_string{source, M - 1, allocator_arguments, static_cast<T &&>(args)...} {}
 
-		template<typename... T>
-		constexpr local_string(auto const & range, allocator_arguments_marker, T &&... args)
+		template<typename R, typename... T>
+		constexpr local_string(R const & range, allocator_arguments_marker, T &&... args)
+			requires requires(R const & r) { r.data(); r.size(); }
 			: local_string{range.data(), range.size(), allocator_arguments, static_cast<T &&>(args)...} {}
 
 		constexpr ~local_string() {
@@ -151,6 +121,7 @@ namespace gstd::string {
 		constexpr local_string & operator=(local_string && rhs) noexcept(noexcept(_allocator = static_cast<Allocator &&>(_allocator))) {
 			if(this == &rhs)
 				return *this;
+			_allocator.deallocate(_ptr, _capacity);
 			_ptr = rhs._ptr;
 			_size = rhs._size;
 			_capacity = rhs._capacity;
