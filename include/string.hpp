@@ -143,8 +143,7 @@ namespace gstd::string {
 			_allocator.deallocate(_ptr, _capacity);
 		}
 
-		template<size_t M, typename A>
-		constexpr local_string & operator=(local_string<M, A> const & rhs) {
+		constexpr local_string & operator=(local_string const & rhs) {
 			assign(*this, rhs);
 			return *this;
 		}
@@ -270,7 +269,7 @@ namespace gstd::string {
 		}
 
 		constexpr void reallocate(size_t new_capacity) noexcept {
-			_ptr = _allocator.reallocate(_ptr, _capacity, new_capacity);
+			_allocator.reallocate(_ptr, _capacity, new_capacity);
 			_capacity = new_capacity;
 		}
 
@@ -327,8 +326,28 @@ namespace gstd::string {
 	// TODO rbegin() & rend()
 
 	template<size_t N, typename A>
+	constexpr bool operator==(local_string<N, A> const & lhs, std::string_view rhs) noexcept {
+		return static_cast<std::string_view>(lhs) == rhs;
+	}
+
+	template<size_t N, typename A, size_t M>
+	constexpr bool operator==(local_string<N, A> const & lhs, char const (& rhs)[M]) noexcept {
+		return lhs == std::string_view{rhs, M - 1};
+	}
+
+	template<size_t N, typename A>
 	constexpr bool operator==(local_string<N, A> const & lhs, auto const & rhs) noexcept {
 		return lhs == std::string_view{rhs.data(), rhs.size()};
+	}
+
+	template<size_t N, typename A>
+	constexpr bool operator<=>(local_string<N, A> const & lhs, std::string_view rhs) noexcept {
+		return static_cast<std::string_view>(lhs) == rhs;
+	}
+
+	template<size_t N, typename A, size_t M>
+	constexpr bool operator<=>(local_string<N, A> const & lhs, char const (& rhs)[M]) noexcept {
+		return lhs <=> std::string_view{rhs, M - 1};
 	}
 
 	template<size_t N, typename A>
