@@ -78,13 +78,11 @@ consteval void constructors() noexcept {
 		static_assert(test(lstr_t{sstr_t{10, 'A'}}));
 		static_assert(test(lstr_t{std::move(lstr_t{10, 'A'})}));
 		static_assert(test(lstr_t{"AAAAAAAAAA", 10}));
-		static_assert(test(lstr_t{(char const *) "AAAAAAAAAA"}));
 		static_assert(test(lstr_t{"AAAAAAAAAA"}));
 		static_assert(test(sstr_t{10, 'A'}));
 		static_assert(test(sstr_t{lstr_t{10, 'A'}}));
 		static_assert(test(sstr_t{std::move(sstr_t{10, 'A'})}));
 		static_assert(test(sstr_t{"AAAAAAAAAA", 10}));
-		static_assert(test(sstr_t{(char const *) "AAAAAAAAAA"}));
 		static_assert(test(sstr_t{"AAAAAAAAAA"}));
 		constexpr local_string<256, custom_allocator> cstr{10, 'A'};
 		constexpr local_string<256, custom_allocator> cstr2{10, 'A', gstd::allocator_arguments, "Custom"};
@@ -108,6 +106,65 @@ consteval void constructors() noexcept {
 		static_assert(test(lstr_t{std::move(local_string{cstr})}));
 		static_assert(test(sstr_t{std::move(local_string{cstr})}));
 	}
+	char       mc{'M'};
+	char       cc{'C'};
+	char       mbuf[]{"Mutable"};
+	char const cbuf[]{"Constant"};
+	unsigned char       uc{10};
+	unsigned short      us{uc};
+	unsigned int        ui{uc};
+	unsigned long       ul{uc};
+	unsigned long long ull{uc};
+	sstr_t{10,  'A'};
+	sstr_t{uc,  'A'};
+	sstr_t{us,  'A'};
+	sstr_t{ui,  'A'};
+	sstr_t{ul,  'A'};
+	sstr_t{ull, 'A'};
+	sstr_t{10,  mc};
+	sstr_t{uc,  mc};
+	sstr_t{us,  mc};
+	sstr_t{ui,  mc};
+	sstr_t{ul,  mc};
+	sstr_t{ull, mc};
+	sstr_t{10,  cc};
+	sstr_t{uc,  cc};
+	sstr_t{us,  cc};
+	sstr_t{ui,  cc};
+	sstr_t{ul,  cc};
+	sstr_t{ull, cc};
+	local_string<1, custom_allocator>{10,  'A', gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{uc,  'A', gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{us,  'A', gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{ui,  'A', gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{ul,  'A', gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{ull, 'A', gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{10,  mc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{uc,  mc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{us,  mc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{ui,  mc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{ul,  mc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{ull, mc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{10,  cc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{uc,  cc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{us,  cc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{ui,  cc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{ul,  cc, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{ull, cc, gstd::allocator_arguments, "Custom"};
+	local_string{"Mutable"};
+	local_string{"Constant"};
+	local_string{mbuf};
+	local_string{cbuf};
+	local_string<1, custom_allocator>{"Mutable", gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{"Constant", gstd::allocator_arguments, "Custom"};
+	sstr_t{"Mutable", 7};
+	sstr_t{"Constant", 8};
+	sstr_t{mbuf, 7};
+	sstr_t{cbuf, 8};
+	local_string<1, custom_allocator>{"Mutable", 7, gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{"Constant", 8, gstd::allocator_arguments, "Custom"};
+	sstr_t{std::string_view{"Test"}};
+	local_string<1, custom_allocator>{std::string_view{"Test"}, gstd::allocator_arguments, "Custom"};
 }
 
 consteval void assignments() noexcept {
@@ -132,6 +189,10 @@ consteval void assignments() noexcept {
 	assert((sstr = std::move(scstr)) == "Custom" && scstr == "Custom");
 	assert((local_string{std::move(lcstr)}, lcstr == ""));
 	assert((local_string{std::move(scstr)}, scstr == ""));
+	assert((lstr = "Array") == "Array");
+	assert((sstr = "Array") == "Array");
+	assert((lstr = 'A') == "A");
+	assert((sstr = 'A') == "A");
 }
 
 int main() {
