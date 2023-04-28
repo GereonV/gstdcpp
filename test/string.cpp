@@ -14,10 +14,10 @@ struct custom_allocator {
 		return gstd::string::allocator::allocate(c);
 	}
 
-	constexpr auto reallocate(char * op, size_t oc, size_t nc) noexcept {
+	constexpr void reallocate(char *& op, size_t oc, size_t nc) noexcept {
 		allocations.emplace_back(-static_cast<int>(oc));
 		allocations.emplace_back(static_cast<int>(nc));
-		return gstd::string::allocator::reallocate(op, oc, nc);
+		gstd::string::allocator::reallocate(op, oc, nc);
 	}
 
 	constexpr void deallocate(char * p, size_t c) noexcept {
@@ -195,13 +195,35 @@ consteval void assignments() noexcept {
 	assert((local_string{std::move(scstr)}, scstr == ""));
 	assert((lstr = "Array") == "Array");
 	assert((sstr = "Array") == "Array");
-	assert((lstr = (char const *)"Pointer") == (char const *)"Pointer");
-	assert((sstr = (char const *)"Pointer") == (char const *)"Pointer");
+	assert((lstr = (char const *) "Pointer") == (char const *) "Pointer");
+	assert((sstr = (char const *) "Pointer") == (char const *) "Pointer");
 	assert((lstr = 'A') == "A");
 	assert((sstr = 'A') == "A");
+}
+
+consteval void memory() noexcept {
+	gstd::local_string<1, custom_allocator> str;
+	auto && actual = str.allocator().allocations;
+	std::vector<int> expected;
+	auto assert_allocs = [&](size_t cap) { assert(str.capacity() == cap && actual == expected); };
+	assert_allocs(0);
+	str.reserve(10); expected.emplace_back(11);
+	assert_allocs(10);
+	str.reserve(0);
+	assert_allocs(10);
+	assert(str.shrink_to_fit()); expected.emplace_back(-11);
+	assert_allocs(0);
+	str.reserve(10); expected.emplace_back(11);
+	assert_allocs(10);
+	str.reserve(20); expected.emplace_back(-11); expected.emplace_back(21);
+	assert_allocs(20);
+	str.size(10);
+	assert(!str.shrink_to_fit());
+	assert_allocs(20);
 }
 
 int main() {
 	constructors();
 	assignments();
+	memory();
 }
