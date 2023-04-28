@@ -155,8 +155,12 @@ consteval void constructors() noexcept {
 	local_string{"Constant"};
 	local_string{mbuf};
 	local_string{cbuf};
+	sstr_t{(char       *) mbuf};
+	sstr_t{(char const *) cbuf};
 	local_string<1, custom_allocator>{"Mutable", gstd::allocator_arguments, "Custom"};
 	local_string<1, custom_allocator>{"Constant", gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{(char const *) "Mutable", gstd::allocator_arguments, "Custom"};
+	local_string<1, custom_allocator>{(char       *) "Constant", gstd::allocator_arguments, "Custom"};
 	sstr_t{"Mutable", 7};
 	sstr_t{"Constant", 8};
 	sstr_t{mbuf, 7};
@@ -191,6 +195,8 @@ consteval void assignments() noexcept {
 	assert((local_string{std::move(scstr)}, scstr == ""));
 	assert((lstr = "Array") == "Array");
 	assert((sstr = "Array") == "Array");
+	assert((lstr = (char const *)"Pointer") == (char const *)"Pointer");
+	assert((sstr = (char const *)"Pointer") == (char const *)"Pointer");
 	assert((lstr = 'A') == "A");
 	assert((sstr = 'A') == "A");
 }

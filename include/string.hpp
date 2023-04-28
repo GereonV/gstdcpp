@@ -9,8 +9,6 @@
 
 namespace gstd::string {
 	namespace detail {
-		template<typename, typename> inline constexpr auto is_same = false;
-		template<typename T> inline constexpr auto is_same<T, T> = true;
 		template<typename T> concept range = requires(T const & t) { t.data(); t.size(); };
 	}
 
@@ -40,7 +38,9 @@ namespace gstd::string {
 	// - void deallocate(char * ptr, size_t count) noexcept
 	template<size_t N, typename Allocator = allocator>
 	class local_string {
-	static_assert(N); // sizeof("") == 1
+#ifndef TEST
+	static_assert(N >= sizeof(nullptr)); // sizeof("") == 1 and alignment is at least size of pointer
+#endif
 	public:
 		static constexpr auto npos = string::npos;
 
@@ -73,6 +73,9 @@ namespace gstd::string {
 		constexpr explicit(M > N) local_string(char const (& source)[M]) noexcept(M <= N && noexcept(Allocator{}))
 			: local_string{source, allocator_arguments} {}
 
+		constexpr explicit local_string(std::string_view sv)
+			: local_string{sv, allocator_arguments} {}
+
 		constexpr explicit local_string(detail::range auto const & range)
 			: local_string{range, allocator_arguments} {}
 
@@ -95,6 +98,10 @@ namespace gstd::string {
 		template<size_t M, typename... T>
 		constexpr local_string(char const (& source)[M], allocator_arguments_marker, T &&... args) noexcept(M <= N && noexcept(Allocator{static_cast<T &&>(args)...}))
 			: local_string{source, M - 1, allocator_arguments, static_cast<T &&>(args)...} {}
+
+		template<typename... T>
+		constexpr local_string(std::string_view sv, allocator_arguments_marker, T &&... args)
+			: local_string{sv.data(), sv.size(), allocator_arguments, static_cast<T &&>(args)...} {}
 
 		template<typename... T>
 		constexpr local_string(detail::range auto const & range, allocator_arguments_marker, T &&... args)
@@ -133,6 +140,11 @@ namespace gstd::string {
 		template<size_t M>
 		constexpr local_string & operator=(char const (& source)[M]) noexcept(M <= N) {
 			assign(*this, source);
+			return *this;
+		}
+
+		constexpr local_string & operator=(std::string_view sv) {
+			assign(*this, sv);
 			return *this;
 		}
 
@@ -291,8 +303,13 @@ namespace gstd::string {
 	}
 
 	template<size_t N, typename A>
+	constexpr bool operator==(local_string<N, A> const & lhs, std::string_view sv) noexcept {
+		return static_cast<std::string_view>(lhs) == sv;
+	}
+
+	template<size_t N, typename A>
 	constexpr bool operator==(local_string<N, A> const & lhs, detail::range auto const & rhs) noexcept {
-		return static_cast<std::string_view>(lhs) == std::string_view{rhs.data(), rhs.size()};
+		return lhs == std::string_view{rhs.data(), rhs.size()};
 	}
 
 	template<size_t N, typename A, size_t M>
@@ -301,8 +318,13 @@ namespace gstd::string {
 	}
 
 	template<size_t N, typename A>
+	constexpr auto operator<=>(local_string<N, A> const & lhs, std::string_view sv) noexcept {
+		return static_cast<std::string_view>(lhs) <=> sv;
+	}
+
+	template<size_t N, typename A>
 	constexpr auto operator<=>(local_string<N, A> const & lhs,detail::range auto const & rhs) noexcept {
-		return static_cast<std::string_view>(lhs) <=> std::string_view{rhs.data(), rhs.size()};
+		return lhs <=> std::string_view{rhs.data(), rhs.size()};
 	}
 
 	// TODO rbegin() & rend()
@@ -316,33 +338,15 @@ namespace gstd::string {
 	}
 
 	template<size_t N, typename A>
-	constexpr local_string<N, A> & operator+=(local_string<N, A> & lhs, detail::range auto const & range) {
-		append(lhs, range.data(), range.size());
+	constexpr local_string<N, A> & operator+=(local_string<N, A> & lhs, std::string_view sv) {
+		append(lhs, sv.data(), sv.size());
 		return lhs;
 	}
 
-	template<size_t N, typename A, size_t M>
-	constexpr local_string<N, A> operator+(local_string<N, A> const & lhs, char const (& rhs)[M]) {
-		auto cpy = lhs;
-		return cpy += rhs;
-	}
-
 	template<size_t N, typename A>
-	constexpr local_string<N, A> operator+(local_string<N, A> const & lhs, detail::range auto const & range) {
-		auto cpy = lhs;
-		return cpy += range;
-	}
-
-	template<size_t N, typename A, size_t M>
-	constexpr local_string<N, A> operator+(local_string<N, A> && lhs, char const (& rhs)[M]) {
-		lhs += rhs;
-		return static_cast<local_string<N, A> &&>(lhs);
-	}
-
-	template<size_t N, typename A>
-	constexpr local_string<N, A> operator+(local_string<N, A> && lhs, detail::range auto const & range) {
-		lhs += range;
-		return static_cast<local_string<N, A> &&>(lhs);
+	constexpr local_string<N, A> & operator+=(local_string<N, A> & lhs, detail::range auto const & range) {
+		append(lhs, range.data(), range.size());
+		return lhs;
 	}
 
 	template<size_t N, typename A>
@@ -393,6 +397,12 @@ namespace gstd::string {
 
 	// pos ∈ [0, size()]
 	template<size_t N, typename A>
+	constexpr void insert(local_string<N, A> & s, size_t pos, std::string_view sv) {
+		insert(s, sv.data(), sv.size());
+	}
+
+	// pos ∈ [0, size()]
+	template<size_t N, typename A>
 	constexpr void insert(local_string<N, A> & s, size_t pos, detail::range auto const & range) {
 		insert(s, range.data(), range.size());
 	}
@@ -425,6 +435,11 @@ namespace gstd::string {
 	}
 
 	template<size_t N, typename A>
+	constexpr void append(local_string<N, A> & s, std::string_view sv) {
+		append(s, sv.data(), sv.size());
+	}
+
+	template<size_t N, typename A>
 	constexpr void append(local_string<N, A> & s, detail::range auto const & range) {
 		append(s, range.data(), range.size());
 	}
@@ -448,6 +463,11 @@ namespace gstd::string {
 	template<size_t N, typename A, size_t M>
 	constexpr void assign(local_string<N, A> & s, char const (& source)[M]) noexcept(M <= N) {
 		assign(s, source, M - 1);
+	}
+
+	template<size_t N, typename A>
+	constexpr void assign(local_string<N, A> & s, std::string_view sv) {
+		assign(s, sv.data(), sv.size());
 	}
 
 	template<size_t N, typename A>
@@ -486,6 +506,11 @@ namespace gstd::string {
 	}
 
 	template<size_t N, typename A>
+	constexpr bool starts_with(local_string<N, A> const & s, std::string_view sv) noexcept {
+		return starts_with(s, sv.data(), sv.size());
+	}
+
+	template<size_t N, typename A>
 	constexpr bool starts_with(local_string<N, A> const & s, detail::range auto const & range) noexcept {
 		return starts_with(s, range.data(), range.size());
 	}
@@ -503,6 +528,11 @@ namespace gstd::string {
 	template<size_t N, typename A, size_t M>
 	constexpr bool ends_with(local_string<N, A> const & s, char const (& t)[M]) noexcept {
 		return ends_with(s, t, M - 1);
+	}
+
+	template<size_t N, typename A>
+	constexpr bool ends_with(local_string<N, A> const & s, std::string_view sv) noexcept {
+		return ends_with(s, sv.data(), sv.size());
 	}
 
 	template<size_t N, typename A>
@@ -526,6 +556,11 @@ namespace gstd::string {
 	}
 
 	template<size_t N, typename A>
+	constexpr size_t find(local_string<N, A> const & s, std::string_view sv, size_t pos = 0) noexcept {
+		return find(s, sv.data(), sv.size(), pos);
+	}
+
+	template<size_t N, typename A>
 	constexpr size_t find(local_string<N, A> const & s, detail::range auto const & range, size_t pos = 0) noexcept {
 		return find(s, range.data(), range.size(), pos);
 	}
@@ -543,6 +578,11 @@ namespace gstd::string {
 	template<size_t N, typename A, size_t M>
 	constexpr size_t rfind(local_string<N, A> const & s, char const (& t)[M], size_t pos = npos) noexcept {
 		return rfind(s, t, M - 1, pos);
+	}
+
+	template<size_t N, typename A>
+	constexpr size_t rfind(local_string<N, A> const & s, std::string_view sv, size_t pos = npos) noexcept {
+		return rfind(s, sv.data(), sv.size(), pos);
 	}
 
 	template<size_t N, typename A>
