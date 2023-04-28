@@ -38,8 +38,9 @@ namespace gstd::string {
 	// - void deallocate(char * ptr, size_t count) noexcept
 	template<size_t N, typename Allocator = allocator>
 	class local_string {
+	static_assert(N); // sizeof("") == 1
 #ifndef TEST
-	static_assert(N >= sizeof(nullptr)); // sizeof("") == 1 and alignment is at least size of pointer
+	static_assert(N >= sizeof(nullptr)); // alignment is at least size of pointer
 #endif
 	public:
 		static constexpr auto npos = string::npos;
@@ -328,7 +329,6 @@ namespace gstd::string {
 	}
 
 	// TODO rbegin() & rend()
-	// TODO operator*
 	// TODO operator*=
 
 	template<size_t N, typename A, size_t M>
