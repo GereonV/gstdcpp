@@ -222,8 +222,20 @@ consteval void memory() noexcept {
 	assert_allocs(20);
 }
 
+consteval void appending() noexcept {
+	using gstd::local_string;
+	local_string str{"A"};
+	str += "B";
+	assert(str == "AB");
+	str += (char const *) "C";
+	assert(str == "ABC");
+	str += local_string{"D"};
+	assert(str == "ABCD");
+}
+
 int main() {
 	constructors();
 	assignments();
 	memory();
+	appending();
 }
