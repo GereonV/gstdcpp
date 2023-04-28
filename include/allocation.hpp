@@ -23,7 +23,9 @@ namespace gstd::string {
 	public:
 		[[nodiscard]] static constexpr allocation_result<char> allocate(size_t count) {
 			if consteval {
-				return {new char[count], count};
+				auto ptr = new char[count];
+				for(auto i = count; i--;) ptr[i] = 0;
+				return {ptr, count};
 			} else {
 				auto [ptr, size] = do_allocation(count);
 				if(!ptr) throw;
@@ -34,9 +36,8 @@ namespace gstd::string {
 		static constexpr void reallocate(char * & ptr, size_t old_count, size_t new_count) {
 			if consteval {
 				auto new_ptr = new char[new_count];
-				auto copy_count = old_count > new_count ? new_count : old_count; // min
-				for(size_t i{}; i < copy_count; ++i)
-					new_ptr[i] = ptr[i];
+				for(auto i = new_count; i--;)
+					new_ptr[i] = i < old_count ? ptr[i] : 0;
 				delete[] ptr;
 				ptr = new_ptr;
 			} else {
