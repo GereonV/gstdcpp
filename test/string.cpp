@@ -233,9 +233,19 @@ consteval void appending() noexcept {
 	assert(str == "ABCD");
 }
 
+consteval void stack() noexcept {
+	gstd::local_string<10> str;
+	for(auto c : {'A', 'B', 'C', 'D'})
+		push_back(str, c);
+	assert(str == "ABCD");
+	for(auto c : {'D', 'C', 'B', 'A'})
+		assert(pop_back(str) == c);
+}
+
 int main() {
 	constructors();
 	assignments();
 	memory();
 	appending();
+	stack();
 }

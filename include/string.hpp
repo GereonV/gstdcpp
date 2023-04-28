@@ -362,7 +362,7 @@ namespace gstd::string {
 	template<size_t N, typename A>
 	constexpr char pop_back(local_string<N, A> & s) noexcept {
 		auto new_size = s.size() - 1;
-		auto ptr = s.begin();
+		auto ptr = s.data();
 		auto c = ptr[new_size];
 		s.size(new_size);
 		ptr[new_size] = 0;
