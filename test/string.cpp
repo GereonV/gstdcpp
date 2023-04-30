@@ -278,6 +278,28 @@ consteval void erase() noexcept {
 	assert(str == "");
 }
 
+consteval void searching() noexcept {
+	using gstd::local_string, gstd::string::npos;
+	constexpr local_string e{""};
+	constexpr local_string str{"Lots of stuff to be found here."};
+	assert(!starts_with(e, 'X'));
+	assert(starts_with(str, 'L') && !starts_with(str, 'X'));
+	assert(starts_with(e, "") && !starts_with(e, "Lot"));
+	assert(starts_with(str, "Lot") && !starts_with(str, "Low") && !starts_with(str, "Lott"));
+	assert(!ends_with(e, 'X'));
+	assert(ends_with(str, '.') && !ends_with(str, 'X'));
+	assert(ends_with(e, "") && !ends_with(e, "here."));
+	assert(ends_with(str, "here.") && !ends_with(str, "hear.") && !ends_with(str, "heat."));
+	assert(find(e, 'X') == npos);
+	assert(find(str, 'L') == 0 && find(str, 'o') == 1 && find(str, 'o', 2) == 5 && find(str, '.') == str.size() - 1 && find(str, 'X') == npos);
+	assert(find(e, "") == 0 && find(e, "X") == npos);
+	assert(find(str, "Lot") == 0 && find(str, "Low") == npos);
+	assert(rfind(e, 'X') == npos);
+	assert(rfind(str, 'L') == 0 && rfind(str, 'o', 7) == 5 && rfind(str, 'o', 4) == 1 && rfind(str, '.') == str.size() - 1 && rfind(str, 'X') == npos);
+	assert(rfind(e, "") == 0 && rfind(e, "X") == npos);
+	assert(rfind(str, "Lot") == 0 && rfind(str, "Low") == npos);
+}
+
 int main() {
 	constructors();
 	assignments();
@@ -286,4 +308,5 @@ int main() {
 	stack();
 	insertions();
 	erase();
+	searching();
 }
