@@ -611,17 +611,10 @@ namespace gstd::string {
 }
 
 namespace std {
-	template<typename T> struct hash;
-	template<size_t N, typename A> struct hash<gstd::string::local_string<N, A>> {
-		constexpr size_t operator()(gstd::string::local_string<N, A> const & s) const noexcept {
+	template<size_t N, typename A>
+	struct hash<gstd::string::local_string<N, A>> {
+		std::size_t operator()(gstd::string::local_string<N, A> const & s) const noexcept {
 			return std::hash<std::string_view>{}(s);
-#if 0
-			// xor-version of djb2 (Dan Bernstein)
-			size_t hash = 5381;
-			for(auto c : s)
-				hash = hash * 33 ^ c;
-			return hash;
-#endif
 		}
 	};
 }
