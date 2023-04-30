@@ -240,6 +240,27 @@ consteval void stack() noexcept {
 	assert(str == "ABCD");
 	for(auto c : {'D', 'C', 'B', 'A'})
 		assert(pop_back(str) == c);
+	str = "XZYX";
+	for(auto c : {'X', 'Y', 'Z'})
+		assert(pop_back(str) == c);
+	for(auto c : {'A', 'B', 'C', 'D'})
+		str += c;
+	assert(str == "XABCD");
+	for(auto c : {'D', 'C', 'B', 'A'})
+		assert(pop_back(str) == c);
+	assert(str == "X");
+}
+
+consteval void insertions() noexcept {
+	gstd::local_string<256> str;
+	insert(str, 0, "ABCD");
+	assert(str == "ABCD");
+	insert(str, 0, 3, 'X');
+	assert(str == "XXXABCD");
+	insert(str, 5, std::string_view{"-"});
+	assert(str == "XXXAB-CD");
+	insert(str, str.size(), (char const *) "lol");
+	assert(str == "XXXAB-CDlol");
 }
 
 int main() {
@@ -248,4 +269,5 @@ int main() {
 	memory();
 	appending();
 	stack();
+	insertions();
 }

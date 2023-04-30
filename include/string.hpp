@@ -331,6 +331,12 @@ namespace gstd::string {
 	// TODO rbegin() & rend()
 	// TODO operator*=
 
+	template<size_t N, typename A>
+	constexpr local_string<N, A> & operator+=(local_string<N, A> & lhs, char c) {
+		append(lhs, 1, c);
+		return lhs;
+	}
+
 	template<size_t N, typename A, size_t M>
 	constexpr local_string<N, A> & operator+=(local_string<N, A> & lhs, char const (& rhs)[M]) {
 		append(lhs, rhs, M - 1);
@@ -392,19 +398,19 @@ namespace gstd::string {
 	// pos ∈ [0, size()]
 	template<size_t N, typename A, size_t M>
 	constexpr void insert(local_string<N, A> & s, size_t pos, char const (& source)[M]) {
-		insert(s, source, M - 1);
+		insert(s, pos, source, M - 1);
 	}
 
 	// pos ∈ [0, size()]
 	template<size_t N, typename A>
 	constexpr void insert(local_string<N, A> & s, size_t pos, std::string_view sv) {
-		insert(s, sv.data(), sv.size());
+		insert(s, pos, sv.data(), sv.size());
 	}
 
 	// pos ∈ [0, size()]
 	template<size_t N, typename A>
 	constexpr void insert(local_string<N, A> & s, size_t pos, detail::range auto const & range) {
-		insert(s, range.data(), range.size());
+		insert(s, pos, range.data(), range.size());
 	}
 
 	template<size_t N, typename A>
@@ -417,7 +423,7 @@ namespace gstd::string {
 		return ptr + size;
 	}
 
-	template<size_t N, typename A, size_t M>
+	template<size_t N, typename A>
 	constexpr void append(local_string<N, A> & s, size_t count, char c) {
 		auto ptr = append_unspecified(s, count);
 		set(ptr, count, c);
