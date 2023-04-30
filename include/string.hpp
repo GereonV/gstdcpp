@@ -485,7 +485,7 @@ namespace gstd::string {
 	template<size_t N, typename A>
 	constexpr void erase(local_string<N, A> & s, size_t pos, size_t count = npos) noexcept {
 		auto size = s.size();
-		auto ptr = s.begin() + pos;
+		auto ptr = s.data() + pos;
 		if(count == npos || pos + count >= size) {
 			s.size(pos);
 			*ptr = 0;

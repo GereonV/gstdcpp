@@ -263,6 +263,21 @@ consteval void insertions() noexcept {
 	assert(str == "XXXAB-CDlol");
 }
 
+consteval void erase() noexcept {
+	gstd::local_string<256> str;
+	str = "Testing LOL! xD";
+	erase(str, 4, 3);
+	assert(str == "Test LOL! xD");
+	erase(str, 0, 5);
+	assert(str == "LOL! xD");
+	erase(str, 4);
+	assert(str == "LOL!");
+	erase(str, 3, 100);
+	assert("LOL");
+	erase(str, 0);
+	assert(str == "");
+}
+
 int main() {
 	constructors();
 	assignments();
@@ -270,4 +285,5 @@ int main() {
 	appending();
 	stack();
 	insertions();
+	erase();
 }
