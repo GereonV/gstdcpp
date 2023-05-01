@@ -626,7 +626,24 @@ namespace gstd::string {
 		return is;
 	}
 
-	// TODO getline()
+	template<size_t N, typename A>
+	std::istream & getline(std::istream & is, local_string<N, A> & s, char delim = '\n') {
+		std::istream::sentry sentry{is, true};
+		if(!sentry)
+			return is;
+		clear(s);
+		auto eof = std::istream::traits_type::eof();
+		if(auto c = is.get(); c != eof) {
+			do {
+				s += static_cast<char>(c);
+				c = is.get();
+				// if(c == eof || c == delim && is.peek() == eof)
+				if(c == eof)
+					is.setstate(is.eofbit);
+			} while(c != eof && c != delim);
+		}
+		return is;
+	}
 }
 
 namespace std {

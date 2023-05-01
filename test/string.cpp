@@ -325,6 +325,29 @@ void io() noexcept {
 	assert(is2.good() && s == "lol2");
 	is2 >> s;
 	assert(is2.eof() && is.fail() && s == "lol2");
+	std::istringstream lines{
+		"Test\n"
+		"Test 2\n"
+		"  lol  lol  \n"
+		"Test 3\n"
+	};
+	getline(lines, s);
+	assert(lines.good() && s == "Test");
+	getline(lines, s);
+	assert(lines.good() && s == "Test 2");
+	getline(lines, s);
+	assert(lines.good() && s == "  lol  lol  ");
+	getline(lines, s);
+	assert(lines.good() && s == "Test 3");
+	getline(lines, s);
+	assert(lines.eof() && lines.fail() && s == "");
+	std::istringstream empty{""};
+	s = "x";
+	getline(empty, s);
+	assert(empty.eof() && empty.fail() && s == "");
+	s = "x";
+	getline(empty, s);
+	assert(empty.eof() && empty.fail() && s == "x");
 }
 
 int main() {
