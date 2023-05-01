@@ -3,6 +3,7 @@
 
 #include "allocation.hpp"
 
+#include <istream>
 #include <string_view>
 
 // TODO numeric conversion
@@ -357,12 +358,7 @@ namespace gstd::string {
 
 	template<size_t N, typename A>
 	constexpr void push_back(local_string<N, A> & s, char c) {
-		auto size = s.size();
-		auto new_size = size + 1;
-		auto ptr = s.reserve(s.capacity() * 2);
-		s.size(new_size);
-		ptr[size] = c;
-		ptr[new_size] = 0;
+		*append_unspecified(s, 1) = c;
 	}
 
 	template<size_t N, typename A>
@@ -601,11 +597,34 @@ namespace gstd::string {
 		return os << static_cast<std::string_view>(s);
 	}
 
-	// TODO
-	// template<size_t N, typename A>
-	// std::istream & operator>>(std::istream & is, local_string<N, A> & s) {
-	// 	return is;
-	// }
+	template<size_t N, typename A>
+	std::istream & operator>>(std::istream & is, local_string<N, A> & s) {
+		std::istream::sentry sentry{is};
+		if(!sentry)
+			return is;
+		auto n = npos;
+		if(auto w = is.width(); w)
+			n = w;
+		clear(s);
+		auto eof = std::istream::traits_type::eof();
+		if(auto c = is.get(); c != eof) {
+			auto e = is.exceptions();
+			is.exceptions(is.goodbit);
+			while(n--) {
+				s += static_cast<char>(c);
+				c = is.peek();
+				if(c == eof)
+					is.setstate(is.eofbit);
+				// if(c == eof || std::isspace(c, is.getloc())) throws bad_cast for some reason?!
+				if(c == eof || std::isspace(c))
+					break;
+				is.get();
+			}
+			is.exceptions(e);
+		}
+		is.width(0);
+		return is;
+	}
 
 	// TODO getline()
 }

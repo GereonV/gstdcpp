@@ -1,4 +1,5 @@
 #include <cassert>
+#include <sstream>
 #include <vector>
 #include <string.hpp>
 
@@ -300,6 +301,32 @@ consteval void searching() noexcept {
 	assert(rfind(str, "Lot") == 0 && rfind(str, "Low") == npos);
 }
 
+void io() noexcept {
+	using gstd::local_string;
+	std::ostringstream os{};
+	os << local_string{"Test"};
+	assert(os.view() == "Test");
+	local_string s{"Test 2"};
+	os << ' ' << s;
+	assert(os.view() == "Test Test 2");
+	std::istringstream is{std::move(os).str()};
+	is >> s;
+	assert(is.good() && s == "Test");
+	is >> s;
+	assert(is.good() && s == "Test");
+	is >> s;
+	assert(is.eof() && !is.fail() && s == "2");
+	is >> s;
+	assert(is.eof() && is.fail() && s == "2");
+	std::istringstream is2{"  lol  lol2 "};
+	is2 >> s;
+	assert(is2.good() && s == "lol");
+	is2 >> s;
+	assert(is2.good() && s == "lol2");
+	is2 >> s;
+	assert(is2.eof() && is.fail() && s == "lol2");
+}
+
 int main() {
 	constructors();
 	assignments();
@@ -309,4 +336,5 @@ int main() {
 	insertions();
 	erase();
 	searching();
+	io();
 }
