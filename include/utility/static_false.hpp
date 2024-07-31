@@ -7,9 +7,9 @@
 
 
 #if __cplusplus >= 202101 && (__clang_major__ >= 17 || __GNUC__ >= 13)
-#define GSTD_STATIC_FALSE(T) false
+#define GSTD_STATIC_FALSE(T, ...) false
 #else
-#define GSTD_STATIC_FALSE(T) gstd::utility::static_false::always_false_v<T>
+#define GSTD_STATIC_FALSE(T, ...) gstd::utility::static_false::always_false_v<T, __VA_ARGS__>
 
 namespace gstd::utility::static_false {
     // This mustn't be specialized!
