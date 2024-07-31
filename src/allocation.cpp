@@ -1,20 +1,32 @@
 #include "allocation.hpp"
+
 #include <cstdlib>
 
+#ifdef _WIN32
+#error `_msize` not supported yet
+// _msize on Windows
+#elif __linux__
 #include <malloc.h>
 #define ALLOCATED_SIZE(ptr) malloc_usable_size(ptr)
-// _msize on Windows
-// malloc_size on MacOS
+#elif __APPLE__
+#include <malloc/malloc.h>
+#define ALLOCATED_SIZE(ptr) malloc_size(ptr)
+#else
+#warning No known function to query size of allocation returned from `malloc`
+#endif
 
-gstd::allocation_result<void> gstd::do_allocation(gstd::size_t size) noexcept {
-	auto ptr = std::malloc(size);
-	return {ptr, ALLOCATED_SIZE(ptr)};
-}
+namespace gstd::allocation {
+    allocation_result c_allocator_type::allocate(size_t size) noexcept
+    {
+        auto ptr = std::malloc(size);
+        return {ptr, ALLOCATED_SIZE(ptr)};
+    }
 
-void * gstd::do_reallocation(void * ptr, gstd::size_t new_size) noexcept {
-	return std::realloc(ptr, new_size);
-}
+    allocation_result c_allocator_type::reallocate(allocation_result allocation, size_t new_size) noexcept
+    {
+        auto ptr = std::realloc(allocation.ptr, new_size);
+        return {ptr, ALLOCATED_SIZE(ptr)};
+    }
 
-void gstd::do_deallocation(void * ptr) noexcept {
-	std::free(ptr);
+    void c_allocator_type::deallocate(allocation_result allocation) noexcept { std::free(allocation.ptr); }
 }

@@ -3,20 +3,24 @@
 #include <thread>
 #include <time.hpp>
 
-static void debug_timer() noexcept {
-	gstd::debug_timer timer{"Timer Name"};
-	std::this_thread::sleep_for(std::chrono::seconds{1});
-	std::cout << "Debug Timer:\n";
+using gstd::time::debug_timer;
+
+static void test_debug_timer() noexcept
+{
+    debug_timer timer{"Timer Name"};
+    std::this_thread::sleep_for(std::chrono::seconds{1});
+    std::cout << "Test debug_timer (1s):\n";
 }
 
-static void debug_timer2() noexcept {
-	gstd::debug_timer timer;
-	std::this_thread::sleep_for(std::chrono::seconds{1});
-	std::cout << "Debug Timer (unnamed):\n";
+static void test_debug_timer_unnamed() noexcept
+{
+    debug_timer timer;
+    std::this_thread::sleep_for(std::chrono::seconds{2});
+    std::cout << "Test debug_timer unnamed (2s):\n";
 }
 
-int main() {
-	std::jthread t1{debug_timer};
-	std::this_thread::sleep_for(std::chrono::milliseconds{100});
-	std::jthread t2{debug_timer2};
+int main()
+{
+    std::jthread t1{test_debug_timer};
+    std::jthread t2{test_debug_timer_unnamed};
 }
