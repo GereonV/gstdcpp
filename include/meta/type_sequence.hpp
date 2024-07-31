@@ -13,11 +13,21 @@ namespace gstd::meta::type_sequence {
     using empty = type_sequence<>;
 
     namespace _impl {
-        template<typename... Ts>
-        struct not_type_sequences {
-            static_assert(GSTD_STATIC_FALSE(Ts...), "every template argument must be a type_sequence");
+        template<typename T>
+        struct is_type_sequence {
+            static constexpr bool value = false;
         };
 
+        template<typename... Ts>
+        struct is_type_sequence<type_sequence<Ts...>> {
+            static constexpr bool value = true;
+        };
+    }
+
+    template<typename T>
+    concept sequence_of_types = _impl::is_type_sequence<T>::value;
+
+    namespace _impl {
         template<size_t Idx, typename Head, typename... Tail>
         struct _get : _get<Idx - 1, Tail...> {};
 
@@ -33,15 +43,18 @@ namespace gstd::meta::type_sequence {
             using type = _get<Idx, Ts...>::type;
         };
 
-        template<typename Seq, typename... Seqs>
-        struct concat : not_type_sequences<Seq, Seqs...> {};
+        template<sequence_of_types... Seqs>
+        struct concat {
+            static_assert(sizeof...(Seqs) == 0);
+            using type = empty;
+        };
 
         template<typename... Ts>
         struct concat<type_sequence<Ts...>> {
             using type = type_sequence<Ts...>;
         };
 
-        template<typename... Ts, typename... Us, typename... Tail>
+        template<typename... Ts, typename... Us, sequence_of_types... Tail>
         struct concat<type_sequence<Ts...>, type_sequence<Us...>, Tail...>
             : concat<type_sequence<Ts..., Us...>, Tail...> {};
 
@@ -66,39 +79,44 @@ namespace gstd::meta::type_sequence {
         template<typename... Ts>
         struct contains_predicate {
             template<typename U>
-            using type = std::bool_constant<type_sequence<Ts...>::template contains<U>>;
+            using type = std::bool_constant<(std::same_as<Ts, U> || ...)>;
         };
 
-        template<typename Seq, typename... Seqs>
-        struct intersection : not_type_sequences<Seq, Seqs...> {};
+        template<sequence_of_types... Seqs>
+        struct intersection {
+            static_assert(sizeof...(Seqs) == 0);
+            using type = empty;
+        };
 
         template<typename... Ts>
         struct intersection<type_sequence<Ts...>> {
             using type = type_sequence<Ts...>;
         };
 
-        template<typename... Ts, typename... Us, typename... Tail>
+        template<typename... Ts, typename... Us, sequence_of_types... Tail>
         struct intersection<type_sequence<Ts...>, type_sequence<Us...>, Tail...>
             : intersection<typename filter<contains_predicate<Us...>::template type, Ts...>::type, Tail...> {};
 
-        template<typename Seq1, typename Seq2>
-        struct difference : not_type_sequences<Seq1, Seq2> {};
+        template<sequence_of_types Seq1, sequence_of_types Seq2>
+        struct difference {
+            static_assert(GSTD_STATIC_FALSE(Seq1, Seq2), "should always use partial specialization");
+        };
 
         template<typename... Ts, typename... Us>
         struct difference<type_sequence<Ts...>, type_sequence<Us...>>
             : filter<predicate::negated<contains_predicate<Us...>::template type>::template type, Ts...> {};
     }
 
-    template<typename... Seqs>
+    template<sequence_of_types... Seqs>
     using concat = _impl::concat<Seqs...>::type;
 
-    template<typename... Seqs>
+    template<sequence_of_types... Seqs>
     using intersection = _impl::intersection<Seqs...>::type;
 
-    template<typename Seq1, typename Seq2>
+    template<sequence_of_types Seq1, sequence_of_types Seq2>
     using difference = _impl::difference<Seq1, Seq2>::type;
 
-    template<typename Seq1, typename Seq2>
+    template<sequence_of_types Seq1, sequence_of_types Seq2>
     using symmetric_difference = concat<difference<Seq1, Seq2>, difference<Seq2, Seq1>>;
 
     template<typename... Ts>
@@ -124,10 +142,15 @@ namespace gstd::meta::type_sequence {
         using reversed = _impl::reversed<Ts...>::type;
 
         template<typename T>
-        static constexpr bool contains = any<_impl::same_predicate<T>::template type>;
+        static constexpr bool contains = !intersection<type_sequence, type_sequence<T>>::empty;
 
         template<typename... Us>
         using remove = difference<type_sequence, type_sequence<Us...>>;
+
+        // TODO get (n-th) index of type
+        // TODO unique
+        // TODO sort
+        // TODO zip
     };
 }
 
