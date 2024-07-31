@@ -1,0 +1,195 @@
+# vim:filetype=yaml
+AlignAfterOpenBracket: BlockIndent
+AlignArrayOfStructures: Right
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: false
+  PadOperators: false
+AlignConsecutiveDeclarations:
+  Enabled: false
+  AcrossEmptyLines: false
+  AcrossComments: false
+#   AlignFunctionPointers: false
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+# AlignConsecutiveShortCaseStatements:
+#   Enabled: true
+#   AcrossEmptyLines: true
+#   AcrossComments: true
+#   AlignCaseColons: false
+AlignEscapedNewlines: Left
+AlignOperands: Align
+AlignTrailingComments: true
+# AlignTrailingComments:
+#   Kind: Always
+#   OverEmptyLines: 0
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
+# AllowBreakBeforeNoexceptSpecifier: Always
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: true
+# AllowShortCompoundRequirementOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakBeforeMultilineStrings: false
+AttributeMacros: []
+BinPackArguments: true
+BinPackParameters: false
+BitFieldColonSpacing: Both
+BraceWrapping: # BreakBeforeBraces: Custom
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: Never
+# AfterControlStatement: Multiline
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: true
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+# BracedInitializerIndentWidth unset
+# BreakAdjacentStringLiterals: true
+# BreakAfterAttributes: Leave
+# BreakAfterReturnType: Automatic
+# BreakArrays: false
+BreakBeforeBinaryOperators: All
+BreakBeforeBraces: Custom
+BreakBeforeConceptDeclarations: Always
+# BreakBeforeInlineASMColon: OnlyMultiline
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: AfterComma
+BreakStringLiterals: false
+AlwaysBreakTemplateDeclarations: Yes
+# BreakTemplateDeclarations: Yes
+ColumnLimit: 120
+# CommentPragmas: '^ FOOBAR pragma:'
+CompactNamespaces: false
+# ConstructorInitializerIndentWidth unset
+ContinuationIndentWidth: 2
+Cpp11BracedListStyle: true # unsure...
+DerivePointerAlignment: false
+DisableFormat: false
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: Leave
+FixNamespaceComments: false
+ForEachMacros: ['BOOST_FOREACH']
+IfMacros: []
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex: '^<[^/]*>$'
+    Priority: 1
+  - Regex: '^<.*>$'
+    Priority: 1
+  - Regex: '^".*"$'
+    Priority: 3
+IncludeIsMainRegex: "$"
+IncludeIsMainSourceRegex: ".tcc"
+IndentAccessModifiers: false
+IndentCaseBlocks: false
+IndentCaseLabels: false
+IndentExternBlock: Indent
+IndentGotoLabels: true
+IndentPPDirectives: None
+IndentRequiresClause: false
+IndentWidth: 4
+IndentWrappedFunctionNames: false
+InsertBraces: false
+# InsertNewlineAtEOF: true
+# IntegerLiteralSeparator:
+#   Binary: 8
+#   Decimal: 3
+#   Hex: -1
+#   BinaryMinDigits: 0
+#   DecimalMinDigits: 0
+#   HexMinDigits: 0
+# KeepEmptyLinesAtEOF: 0
+KeepEmptyLinesAtTheStartOfBlocks: false
+LambdaBodyIndentation: Signature
+Language: Cpp
+# LineEnding: LF
+MacroBlockBegin: ''
+MacroBlockEnd: ''
+# Macros: []
+# MainIncludeChar: Any
+MaxEmptyLinesToKeep: 2
+NamespaceIndentation: All
+NamespaceMacros: []
+PPIndentWidth: 1
+PackConstructorInitializers: NextLine
+# PackConstructorInitializers: NextLineOnly
+PointerAlignment: Middle
+QualifierAlignment: Custom
+QualifierOrder: ['static', 'inline', 'constexpr', 'type', 'const', 'volatile', 'restrict']
+# QualifierOrder: ['friend', 'static', 'inline', 'constexpr', 'type', 'const', 'volatile', 'restrict']
+RawStringFormats: []
+ReferenceAlignment: Middle
+ReflowComments: false
+RemoveBracesLLVM: true
+# RemoveParentheses: ReturnStatement
+RemoveSemicolon: true
+RequiresClausePosition: OwnLine
+# RequiresExpressionIndentation: OuterScope
+SeparateDefinitionBlocks: Always
+ShortNamespaceLines: 5
+# SkipMacroDefinitionBody: false
+SortIncludes: CaseInsensitive
+SortUsingDeclarations: true
+# SortUsingDeclarations: LexicographicNumeric
+SpaceAfterCStyleCast: true
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceAroundPointerQualifiers: Default # cf. PointerAlignment
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: false
+  AfterForeachMacros: false
+  AfterFunctionDeclarationName: false
+  AfterFunctionDefinitionName: false
+  AfterIfMacros: false
+#   AfterPlacementOperator: false
+  AfterRequiresInClause: true
+  AfterRequiresInExpression: false
+  BeforeNonEmptyParentheses: false
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: Never
+SpacesInContainerLiterals: false
+SpacesInLineCommentPrefix:
+  Minimum: 1
+  Maximum: 1
+# SpacesInParens: Custom
+# SpacesInParensOptions: # SpacesInParens: Never
+#   InConditionalStatements: false
+#   InCStyleCasts: false
+SpacesInSquareBrackets: false
+Standard: Latest
+StatementAttributeLikeMacros: []
+StatementMacros: []
+TabWidth: 4
+# TypeNames: []
+TypenameMacros: []
+UseTab: Never
+WhitespaceSensitiveMacros: ['BOOST_PP_STRINGIZE']
+# PenaltyReturnTypeOnItsOwnLine
