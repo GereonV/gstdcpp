@@ -62,5 +62,11 @@ static_assert(std::same_as<type_sequence<void *, char>::sorted<Comparator>, type
 static_assert(std::same_as<seq::remove<void>::sorted<Comparator>, seq::remove<void>>);
 // seq::sorted<Comparator> doesn't compile
 static_assert(std::same_as<seq2::mapped<Projection>, type_sequence<void *, void **, void const **>>);
+static_assert(std::same_as<
+              zip<type_sequence<char, short>, type_sequence<int, long>, type_sequence<void, void *>>,
+              type_sequence<type_sequence<char, int, void>, type_sequence<short, long, void *>>>);
+// zip<type_sequence<char, short>, type_sequence<int, long>, type_sequence<void>> doesn't compile
+// zip<type_sequence<>, type_sequence<int>, type_sequence<void>> doesn't compile
+static_assert(std::same_as<zip<type_sequence<>, type_sequence<>, type_sequence<>>, type_sequence<>>);
 
 int main() {}

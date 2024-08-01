@@ -17,6 +17,10 @@ namespace gstd::meta::type_sequence {
     template<sequence_of_types Seq1, sequence_of_types Seq2>
     using symmetric_difference = concat<difference<Seq1, Seq2>, difference<Seq2, Seq1>>;
 
+    template<sequence_of_types Seq, sequence_of_types... Seqs>
+    requires ((_impl::size_v<Seq> == _impl::size_v<Seqs>) && ...)
+    using zip = _impl::zip_t<Seq, Seqs...>;
+
     template<typename... Ts>
     struct type_sequence {
         static constexpr size_t size = _impl::size_v<type_sequence>;

@@ -194,6 +194,18 @@ namespace gstd::meta::type_sequence::_impl {
     template<sequence_of_types Seq, template<typename, typename> typename Comp>
     using sort_t = sort<Seq, Comp>::type;
 
+    template<sequence_of_types Seq, sequence_of_types... Seqs>
+    requires ((size_v<Seq> == size_v<Seqs>) && ...)
+    struct zip : concat<type_sequence<type_sequence<head_t<Seq>, head_t<Seqs>...>>, typename zip<tail_t<Seq>, tail_t<Seqs>...>::type> {
+    };
+
+    template<sequence_of_types... Seqs>
+    struct zip<empty, Seqs...> : std::type_identity<empty> {};
+
+    template<sequence_of_types Seq, sequence_of_types... Seqs>
+    requires ((size_v<Seq> == size_v<Seqs>) && ...)
+    using zip_t = zip<Seq, Seqs...>::type;
+
     // TODO resuce/accumulate
 }
 
