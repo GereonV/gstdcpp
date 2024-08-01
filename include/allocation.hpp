@@ -14,33 +14,23 @@ namespace gstd::allocation {
 
     template<typename Alloc>
     concept allocator = requires(Alloc a) {
-                            {
-                                a.allocate(size_t{})
-                            } -> std::same_as<allocation_result>;
-                            {
-                                a.deallocate(allocation_result{nullptr, 0})
-                            } -> std::same_as<void>;
-                            requires noexcept(a.allocate(size_t{}));
-                            requires noexcept(a.deallocate(allocation_result{nullptr, 0}));
-                        };
+        { a.allocate(size_t{}) } -> std::same_as<allocation_result>;
+        { a.deallocate(allocation_result{nullptr, 0}) } -> std::same_as<void>;
+        requires noexcept(a.allocate(size_t{}));
+        requires noexcept(a.deallocate(allocation_result{nullptr, 0}));
+    };
 
     template<typename Alloc>
-    concept reallocating_allocator
-      = allocator<Alloc> && requires(Alloc a) {
-                                {
-                                    a.reallocate(allocation_result{nullptr, 0}, size_t{})
-                                } -> std::same_as<allocation_result>;
-                                requires noexcept(a.reallocate(allocation_result{nullptr, 0}, size_t{}));
-                            };
+    concept reallocating_allocator = allocator<Alloc> && requires(Alloc a) {
+        { a.reallocate(allocation_result{nullptr, 0}, size_t{}) } -> std::same_as<allocation_result>;
+        requires noexcept(a.reallocate(allocation_result{nullptr, 0}, size_t{}));
+    };
 
     template<typename Alloc>
-    concept ownership_aware_allocator
-      = allocator<Alloc> && requires(Alloc a) {
-                                {
-                                    a.owns(allocation_result{nullptr, 0})
-                                } -> std::same_as<bool>;
-                                requires noexcept(a.owns(allocation_result{nullptr, 0}));
-                            };
+    concept ownership_aware_allocator = allocator<Alloc> && requires(Alloc a) {
+        { a.owns(allocation_result{nullptr, 0}) } -> std::same_as<bool>;
+        requires noexcept(a.owns(allocation_result{nullptr, 0}));
+    };
 
     // Use `stateless_allocator` for checking the properties of a type!
     // May be specialized so a type satisfies the `stateless_allocator` concept.

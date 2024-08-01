@@ -10,10 +10,8 @@ namespace gstd::meta::predicate {
     namespace _impl {
         template<typename T>
         concept has_bool_value = requires {
-                                     {
-                                         T::value
-                                     } -> std::same_as<bool const &>;
-                                 };
+            { T::value } -> std::same_as<bool const &>;
+        };
 
         template<typename T>
         concept has_no_value = !requires { T::value; };
