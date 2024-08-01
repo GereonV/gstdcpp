@@ -7,10 +7,13 @@
 namespace gstd::allocation {
     using size_t = decltype(sizeof(nullptr));
 
-    struct allocation_result {
-        void * ptr;
-        size_t size;
+    template<typename T>
+    struct creation_result {
+        T * ptr;
+        size_t size; // in bytes
     };
+
+    using allocation_result = creation_result<void>;
 
     template<typename Alloc>
     concept allocator = requires(Alloc a) {
@@ -32,23 +35,10 @@ namespace gstd::allocation {
         requires noexcept(a.owns(allocation_result{nullptr, 0}));
     };
 
-    // Use `stateless_allocator` for checking the properties of a type!
-    // May be specialized so a type satisfies the `stateless_allocator` concept.
-    // `is_stateless_allocator<T>::value` iff `T::is_stateless_allocator` exists and is truthy or if specialized
-    template<typename T>
-    struct is_stateless_allocator {
-        static constexpr bool value = requires { requires T::is_stateless_allocator; };
-    };
-
     template<typename Alloc>
-    concept stateless_allocator
-      = allocator<Alloc> && std::is_default_constructible_v<Alloc> && is_stateless_allocator<Alloc>::value;
-
-    template<typename T>
-    struct creation_result {
-        T * ptr;
-        size_t size; // still in bytes
-    };
+    concept stateless_allocator = std::is_default_constructible_v<Alloc> && allocator<Alloc const>
+                                  && (!reallocating_allocator<Alloc> || reallocating_allocator<Alloc const>)
+                                  && (!ownership_aware_allocator<Alloc> || ownership_aware_allocator<Alloc const>);
 
     template<typename T, typename... Args>
     requires (std::constructible_from<T, Args...>)
@@ -81,7 +71,7 @@ namespace gstd::allocation {
         static constexpr bool is_stateless_allocator = true;
         [[nodiscard]] static allocation_result allocate(size_t size) noexcept;
         [[nodiscard]] static allocation_result reallocate(allocation_result allocation, size_t new_size) noexcept;
-        void deallocate(allocation_result allocation) noexcept;
+        static void deallocate(allocation_result allocation) noexcept;
     };
 
     static_assert(reallocating_allocator<c_allocator_type>);

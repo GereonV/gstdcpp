@@ -8,17 +8,16 @@ using namespace gstd::allocation;
 static_assert((
   []
   {
-      auto alloc         = c_allocator;
-      auto res           = create<int>(alloc);
-      auto res2          = create<int>(alloc, 42);
+      auto res           = create<int>(c_allocator);
+      auto res2          = create<int>(c_allocator, 42);
       auto [ptr, size]   = res;
       auto [ptr2, size2] = res2;
       assert(size == sizeof(int));
       assert(size2 == sizeof(int));
       assert(*ptr == 0);
       assert(*ptr2 == 42);
-      destroy(alloc, res);
-      destroy(alloc, res2);
+      destroy(c_allocator, res);
+      destroy(c_allocator, res2);
   }(),
   true
 ));
