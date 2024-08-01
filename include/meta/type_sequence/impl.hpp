@@ -161,18 +161,13 @@ namespace gstd::meta::type_sequence::_impl {
     using unique_t = unique<Seq>::type;
 
     template<template<typename, typename> typename Comp, typename T>
-    struct _compare_predicate {
-        template<typename U>
-        struct type : Comp<T, U> {};
-    };
-
-    template<template<typename, typename> typename Comp, typename T>
-    struct compare_predicate : predicate::strict<_compare_predicate<Comp, T>::template type> {};
+    struct compare_predicate
+        : predicate::strict<predicate::from_lambda<[]<typename U> { return Comp<T, U>{}; }>::template type> {};
 
     template<sequence_of_types Seq, template<typename, typename> typename Comp, typename T>
     struct insert_sorted
         : concat<
-            filter_t<Seq, predicate::negated<compare_predicate<Comp, T>::template type>::template type>,
+            filter_t<Seq, predicate::inverted<compare_predicate<Comp, T>::template type>::template type>,
             type_sequence<T>,
             filter_t<Seq, compare_predicate<Comp, T>::template type>> {};
 
@@ -196,8 +191,9 @@ namespace gstd::meta::type_sequence::_impl {
 
     template<sequence_of_types Seq, sequence_of_types... Seqs>
     requires ((size_v<Seq> == size_v<Seqs>) && ...)
-    struct zip : concat<type_sequence<type_sequence<head_t<Seq>, head_t<Seqs>...>>, typename zip<tail_t<Seq>, tail_t<Seqs>...>::type> {
-    };
+    struct zip : concat<
+                   type_sequence<type_sequence<head_t<Seq>, head_t<Seqs>...>>,
+                   typename zip<tail_t<Seq>, tail_t<Seqs>...>::type> {};
 
     template<sequence_of_types... Seqs>
     struct zip<empty, Seqs...> : std::type_identity<empty> {};
@@ -206,7 +202,7 @@ namespace gstd::meta::type_sequence::_impl {
     requires ((size_v<Seq> == size_v<Seqs>) && ...)
     using zip_t = zip<Seq, Seqs...>::type;
 
-    // TODO resuce/accumulate
+    // TODO reduce/accumulate/fold
 }
 
 #endif
