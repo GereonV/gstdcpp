@@ -30,6 +30,7 @@ static_assert(std::same_as<seq2::get<0>, void>);
 static_assert(std::same_as<seq2::get<1>, void *>);
 static_assert(std::same_as<seq2::get<2>, void const *>);
 // seq2::get<3> doesn't compile
+// seq2::get<4> doesn't compile
 static_assert(std::same_as<
               concat<empty, seq, empty, empty, seq2, empty>,
               type_sequence<void, char, short, int, long long, void, void *, void const *>>);
