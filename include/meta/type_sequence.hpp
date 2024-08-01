@@ -70,12 +70,6 @@ namespace gstd::meta::type_sequence {
         template<typename Head, typename... Tail>
         struct reversed<Head, Tail...> : concat<typename reversed<Tail...>::type, type_sequence<Head>> {};
 
-        template<typename T>
-        struct same_predicate {
-            template<typename U>
-            using type = std::is_same<T, U>;
-        };
-
         template<typename... Ts>
         struct contains_predicate {
             template<typename U>
@@ -105,6 +99,85 @@ namespace gstd::meta::type_sequence {
         template<typename... Ts, typename... Us>
         struct difference<type_sequence<Ts...>, type_sequence<Us...>>
             : filter<predicate::negated<contains_predicate<Us...>::template type>::template type, Ts...> {};
+
+        template<typename T, size_t N, typename... Ts>
+        struct _nth_index {
+            static_assert(N == 0 || sizeof...(Ts) == 0);
+        };
+
+        template<typename T, size_t N, typename Head, typename... Tail>
+        requires (N > 0)
+        struct _nth_index<T, N, Head, Tail...>
+            : std::integral_constant<size_t, _nth_index<T, N - std::same_as<T, Head>, Tail...>::value + 1> {};
+
+        template<typename T, typename... Tail>
+        struct _nth_index<T, 1, T, Tail...> : std::integral_constant<size_t, 0> {};
+
+        // wrapper to provide an error
+        template<typename T, size_t N, typename... Ts>
+        struct nth_index : _nth_index<T, N, Ts...> {
+            static_assert(N > 0, "no such thing as zeroth occurence");
+        };
+
+        template<sequence_of_types Seq>
+        struct unique {
+            static_assert(GSTD_STATIC_FALSE(Seq), "should always use partial specialization");
+        };
+
+        template<>
+        struct unique<type_sequence<>> {
+            using type = empty;
+        };
+
+        template<typename Head, typename... Tail>
+        struct unique<type_sequence<Head, Tail...>>
+            : concat<
+                type_sequence<Head>,
+                typename unique<typename difference<type_sequence<Tail...>, type_sequence<Head>>::type>::type> {};
+
+        template<template<typename, typename> typename Comp>
+        struct _compare_predicate {
+            template<sequence_of_types Seq>
+            struct type {
+                static_assert(GSTD_STATIC_FALSE(Seq), "sequence must contain exactly 2 types");
+            };
+
+            template<typename T, typename U>
+            struct type<type_sequence<T, U>> : Comp<T, U> {};
+        };
+
+        // wrapper to provide a nicer error
+        template<template<typename, typename> typename Comp>
+        struct compare_predicate : predicate::strict<_compare_predicate<Comp>::template type> {};
+
+        template<template<typename> typename Comp, typename T, typename... Ts>
+        struct insert_sorted {
+            static_assert(sizeof...(Ts) == 0);
+            using type = type_sequence<T>;
+        };
+
+        template<template<typename> typename Comp, typename T, typename Head, typename... Tail>
+        struct insert_sorted<Comp, T, Head, Tail...>
+            : std::conditional_t<
+                predicate::invoke<Comp, type_sequence<T, Head>>,
+                std::type_identity<type_sequence<T, Head, Tail...>>,
+                concat<type_sequence<Head>, typename insert_sorted<Comp, T, Tail...>::type>> {};
+
+        template<template<typename> typename Comp, sequence_of_types Seq, typename... Ts>
+        struct insert_all_sorted {
+            static_assert(sizeof...(Ts) == 0);
+            using type = Seq;
+        };
+
+        template<template<typename> typename Comp, typename... Ts, typename Head, typename... Tail>
+        struct insert_all_sorted<Comp, type_sequence<Ts...>, Head, Tail...>
+            : insert_all_sorted<Comp, typename insert_sorted<Comp, Head, Ts...>::type, Tail...> {};
+
+        template<template<typename, typename> typename Comp, typename... Ts>
+        struct sort : insert_all_sorted<compare_predicate<Comp>::template type, empty, Ts...> {};
+
+        template<template<typename> typename Proj, typename... Ts>
+        struct mapped : std::type_identity<type_sequence<typename Proj<Ts>::type...>> {}; // `using` produces ugly errors
     }
 
     template<sequence_of_types... Seqs>
@@ -142,15 +215,21 @@ namespace gstd::meta::type_sequence {
         using reversed = _impl::reversed<Ts...>::type;
 
         template<typename T>
-        static constexpr bool contains = !intersection<type_sequence, type_sequence<T>>::empty;
+        static constexpr bool contains = !intersection<type_sequence<T>, type_sequence>::empty;
 
         template<typename... Us>
         using remove = difference<type_sequence, type_sequence<Us...>>;
 
-        // TODO get (n-th) index of type
-        // TODO unique
-        // TODO sort
-        // TODO zip
+        template<typename T, size_t N = 1>
+        static constexpr size_t nth_index = _impl::nth_index<T, N, Ts...>::value;
+
+        using unique = _impl::unique<type_sequence>::type;
+
+        template<template<typename, typename> typename Comp>
+        using sorted = _impl::sort<Comp, Ts...>::type;
+
+        template<template<typename> typename Proj>
+        using mapped = _impl::mapped<Proj, Ts...>::type;
     };
 }
 
