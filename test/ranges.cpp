@@ -5,12 +5,12 @@
 using namespace gstd;
 
 static constinit int const array[]{1, 2, 3, 4, 5};
-
 static_assert(ranges::begin(array) == array);
 static_assert(ranges::end(array) == array + sizeof array / sizeof *array);
 static_assert(ranges::rbegin(array) == std::reverse_iterator{array + sizeof array / sizeof *array});
 static_assert(ranges::rend(array) == std::reverse_iterator{array});
 static_assert(ranges::size(array) == sizeof array / sizeof *array);
+static_assert(!ranges::empty(array));
 
 static constinit std::array array2{1, 2, 3, 4, 5};
 static_assert(ranges::begin(array2) == array2.data());
@@ -18,6 +18,8 @@ static_assert(ranges::end(array2) == array2.data() + array2.size());
 static_assert(ranges::rbegin(array2) == array2.rbegin());
 static_assert(ranges::rend(array2) == array2.rend());
 static_assert(ranges::size(array2) == array2.size());
+static_assert(!ranges::empty(array2));
+static_assert(ranges::empty(std::array<int, 0>{}));
 
 namespace test {
     static constinit char test[]        = "test";
@@ -62,9 +64,13 @@ namespace test {
 
         constexpr auto rend() const noexcept { return rev{ctest}; }
 
-        constexpr auto size() /* */ noexcept { return test::size_; }
+        constexpr auto size() /* */ noexcept { return size_; }
 
         constexpr auto size() const noexcept { return csize; }
+
+        constexpr bool empty() /* */ noexcept { return !size(); }
+
+        constexpr bool empty() const noexcept { return !size(); }
     };
 
     template<typename T>
@@ -126,6 +132,12 @@ namespace test {
     {
         return 36;
     }
+
+    template<typename T>
+    constexpr auto empty(adl_only<T> &) noexcept
+    {
+        return true;
+    }
 }
 
 static constinit test::normal_members_only<int> nmo;
@@ -134,11 +146,13 @@ static_assert(ranges::end(nmo) == test::sent);
 static_assert(ranges::rbegin(nmo) == std::reverse_iterator{test::sent});
 static_assert(ranges::rend(nmo) == std::reverse_iterator{test::test});
 static_assert(ranges::size(nmo) == test::sent - test::test);
+static_assert(!ranges::empty(nmo));
 // ranges::begin(static_cast<test::normal_members_only<int> const>(nmo)) doesn't compile
-// ranges::end(static_cast<test::normal_members_only<int> const>(nmo)) doesn't comile
+// ranges::end(static_cast<test::normal_members_only<int> const>(nmo)) doesn't compile
 // ranges::rbegin(static_cast<test::normal_members_only<int> const>(nmo)) doesn't compile
-// ranges::rend(static_cast<test::normal_members_only<int> const>(nmo)) doesn't comile
-// ranges::size(static_cast<test::normal_members_only<int> const>(nmo)) doesn't comile
+// ranges::rend(static_cast<test::normal_members_only<int> const>(nmo)) doesn't compile
+// ranges::size(static_cast<test::normal_members_only<int> const>(nmo)) doesn't compile
+// ranges::empty(static_cast<test::normal_members_only<int> const>(nmo)) doesn't compile
 
 static constinit test::members_only<int> mo;
 static_assert(ranges::begin(mo) == test::test);
@@ -146,11 +160,13 @@ static_assert(ranges::end(mo) == test::sent);
 static_assert(ranges::rbegin(mo) == test::rev{test::sent});
 static_assert(ranges::rend(mo) == test::rev{test::test});
 static_assert(ranges::size(mo) == test::size_);
+static_assert(!ranges::empty(mo));
 static_assert(ranges::begin(static_cast<test::members_only<int> const &>(mo)) == test::ctest);
 static_assert(ranges::end(static_cast<test::members_only<int> const &>(mo)) == test::csent);
 static_assert(ranges::rbegin(static_cast<test::members_only<int> const &>(mo)) == test::rev{test::csent});
 static_assert(ranges::rend(static_cast<test::members_only<int> const &>(mo)) == test::rev{test::ctest});
 static_assert(ranges::size(static_cast<test::members_only<int> const &>(mo)) == test::csize);
+static_assert(!ranges::empty(static_cast<test::members_only<int> const &>(mo)));
 
 static constinit test::minimal_adl_only<int> mao;
 static_assert(ranges::begin(mao) == test::test);
@@ -158,11 +174,13 @@ static_assert(ranges::end(mao) == test::sent);
 static_assert(ranges::rbegin(mao) == std::reverse_iterator{test::sent});
 static_assert(ranges::rend(mao) == std::reverse_iterator{test::test});
 static_assert(ranges::size(mao) == test::sent - test::test);
+static_assert(!ranges::empty(mao));
 // ranges::begin(static_cast<test::minimal_adl_only<int> const &>(mao)) doesn't compile
 // ranges::end(static_cast<test::minimal_adl_only<int> const &>(mao)) doesn't compile
 // ranges::rbegin(static_cast<test::minimal_adl_only<int> const &>(mao)) doesn't compile
 // ranges::rend(static_cast<test::minimal_adl_only<int> const &>(mao)) doesn't compile
 // ranges::size(static_cast<test::minimal_adl_only<int> const &>(mao)) doesn't compile
+// ranges::empty(static_cast<test::minimal_adl_only<int> const &>(mao)) doesn't compile
 
 static constinit test::adl_only<int> ao;
 static_assert(ranges::begin(ao) == test::test);
@@ -170,8 +188,10 @@ static_assert(ranges::end(ao) == test::sent);
 static_assert(ranges::rbegin(ao) == nullptr);
 static_assert(ranges::rend(ao) == nullptr);
 static_assert(ranges::size(ao) == 36);
+static_assert(ranges::empty(ao));
 static_assert(ranges::begin(static_cast<test::adl_only<int> const &>(ao)) == test::ctest);
 static_assert(ranges::end(static_cast<test::adl_only<int> const &>(ao)) == test::csent);
 static_assert(ranges::rbegin(static_cast<test::adl_only<int> const &>(ao)) == std::reverse_iterator{test::csent});
 static_assert(ranges::rend(static_cast<test::adl_only<int> const &>(ao)) == std::reverse_iterator{test::ctest});
 static_assert(ranges::size(static_cast<test::adl_only<int> const &>(ao)) == test::csent - test::ctest);
+static_assert(!ranges::empty(static_cast<test::adl_only<int> const &>(ao)));
