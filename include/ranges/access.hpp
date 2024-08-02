@@ -176,7 +176,7 @@ namespace gstd::ranges {
               noexcept(noexcept(static_cast<Range &&>(rng).size()))
               /* */ -> decltype(static_cast<Range &&>(rng).size())
             {
-                return static_cast<Range &&>(rng).size();
+                return /*    */ static_cast<Range &&>(rng).size();
             }
 
             template<adl_size_type Range>
@@ -184,7 +184,7 @@ namespace gstd::ranges {
               noexcept(noexcept(size(static_cast<Range &&>(rng))))
               /* */ -> decltype(size(static_cast<Range &&>(rng)))
             {
-                return size(static_cast<Range &&>(rng));
+                return /*    */ size(static_cast<Range &&>(rng));
             }
 
             template<access_size_type Range>
@@ -205,12 +205,57 @@ namespace gstd::ranges {
         };
     }
 
+    namespace _impl::empty {
+        // shadows everything except exactly-matching ADL-overloads
+        void empty(auto &&) = delete;
+
+        template<typename T>
+        concept member_empty = requires(T t) {
+            { static_cast<T &&>(t).empty() } -> std::convertible_to<bool>;
+        };
+        template<typename T>
+        concept adl_empty = requires(T t) {
+            { empty(static_cast<T &&>(t)) } -> std::convertible_to<bool>;
+        };
+        template<typename T>
+        concept member_type = !adl_empty<T> && member_empty<T>;
+        template<typename T>
+        concept adl_type = adl_empty<T>;
+        template<typename T>
+        concept size_type
+          = !adl_empty<T> && !member_type<T> && requires(T t) { size::size_fn{}(static_cast<T &&>(t)) == 0; };
+
+        struct empty_fn {
+            template<member_type Range>
+            [[nodiscard]] GSTD_STATIC constexpr bool operator()(Range && rng) GSTD_CONST
+              noexcept(noexcept(static_cast<Range &&>(rng).empty()))
+            {
+                return static_cast<Range &&>(rng).empty();
+            }
+
+            template<adl_type Range>
+            [[nodiscard]] GSTD_STATIC constexpr bool operator()(Range && rng) GSTD_CONST
+              noexcept(noexcept(empty(static_cast<Range &&>(rng))))
+            {
+                return empty(static_cast<Range &&>(rng));
+            }
+
+            template<size_type Range>
+            [[nodiscard]] GSTD_STATIC constexpr bool operator()(Range && rng) GSTD_CONST
+              noexcept(noexcept(size::size_fn{}(static_cast<Range &&>(rng)) == 0))
+            {
+                return size::size_fn{}(static_cast<Range &&>(rng)) == 0;
+            }
+        };
+    }
+
     inline constexpr _impl::access::begin_fn begin;
     inline constexpr _impl::access::end_fn end;
     inline constexpr _impl::raccess::rbegin_fn rbegin;
     inline constexpr _impl::raccess::rend_fn rend;
     inline constexpr _impl::size::size_fn size;
-    // TODO ssize, empty, data
+    inline constexpr _impl::empty::empty_fn empty;
+    // TODO ssize, data
 }
 
 #endif
