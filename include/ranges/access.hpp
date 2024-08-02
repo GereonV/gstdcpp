@@ -7,6 +7,7 @@
 
 namespace gstd::ranges {
     namespace _impl::access {
+        // shadows everything except exactly-matching ADL-overloads
         void begin(auto &&) = delete;
         void end(auto &&)   = delete;
 
@@ -74,6 +75,7 @@ namespace gstd::ranges {
     }
 
     namespace _impl::raccess {
+        // shadows everything except exactly-matching ADL-overloads
         void rbegin(auto &&) = delete;
         void rend(auto &&)   = delete;
 
@@ -91,40 +93,10 @@ namespace gstd::ranges {
         template<typename T>
         concept adl_type = adl_rbegin<T> && adl_rend<T>;
         template<typename T>
-        concept access_type = !adl_rbegin<T> && !adl_rend<T> && !member_rbegin<T> && !member_rend<T>
-                              && (access::member_type<T> || access::adl_type<T>);
-
-        template<typename T>
-        [[nodiscard]] constexpr auto rbegin(T && t) //
-          noexcept(noexcept(static_cast<T &&>(t).rbegin()))
-          /* */ -> decltype(static_cast<T &&>(t).rbegin())
-        {
-            /*    */ return static_cast<T &&>(t).rbegin();
-        }
-
-        template<typename T>
-        [[nodiscard]] constexpr auto rbegin(T && t)
-          /**/ -> decltype(std::reverse_iterator{access::end_fn{}(static_cast<T &&>(t))})
-        requires (!requires { static_cast<T &&>(t).rbegin(); })
-        {
-            /*   */ return std::reverse_iterator{access::end_fn{}(static_cast<T &&>(t))};
-        }
-
-        template<typename T>
-        [[nodiscard]] constexpr auto rend(T && t) //
-          noexcept(noexcept(static_cast<T &&>(t).rend()))
-          /* */ -> decltype(static_cast<T &&>(t).rend())
-        {
-            /*    */ return static_cast<T &&>(t).rend();
-        }
-
-        template<typename T>
-        [[nodiscard]] constexpr auto rend(T && t)
-          /**/ -> decltype(std::reverse_iterator{access::begin_fn{}(static_cast<T &&>(t))})
-        requires (!requires { static_cast<T &&>(t).rend(); })
-        {
-            /*   */ return std::reverse_iterator{access::begin_fn{}(static_cast<T &&>(t))};
-        }
+        concept access_type = !adl_rbegin<T> && !adl_rend<T> && !member_rbegin<T> && !member_rend<T> && requires(T t) {
+            std::reverse_iterator{access::begin_fn{}(static_cast<T &&>(t))};
+            std::reverse_iterator{access::end_fn{}(static_cast<T &&>(t))};
+        };
 
         struct rbegin_fn {
             template<member_type Range>
@@ -179,12 +151,66 @@ namespace gstd::ranges {
         };
     }
 
+    namespace _impl::size {
+        // shadows everything except exactly-matching ADL-overloads
+        void size(auto &&)  = delete;
+        void ssize(auto &&) = delete;
+
+        // TODO refine return type to (unsigned) integral
+        template<typename T>
+        concept member_size = requires(T t) { static_cast<T &&>(t).size(); };
+        template<typename T>
+        concept adl_size = requires(T t) { size(static_cast<T &&>(t)); };
+        template<typename T>
+        concept member_size_type = !adl_size<T> && member_size<T>;
+        template<typename T>
+        concept adl_size_type = adl_size<T>;
+        template<typename T>
+        concept access_size_type = !adl_size<T> && !member_size<T> && requires(T t) {
+            std::distance(access::begin_fn{}(static_cast<T &&>(t)), access::end_fn{}(static_cast<T &&>(t)));
+        };
+
+        struct size_fn {
+            template<member_size_type Range>
+            [[nodiscard]] GSTD_STATIC constexpr auto operator()(Range && rng) GSTD_CONST //
+              noexcept(noexcept(static_cast<Range &&>(rng).size()))
+              /* */ -> decltype(static_cast<Range &&>(rng).size())
+            {
+                return static_cast<Range &&>(rng).size();
+            }
+
+            template<adl_size_type Range>
+            [[nodiscard]] GSTD_STATIC constexpr auto operator()(Range && rng) GSTD_CONST //
+              noexcept(noexcept(size(static_cast<Range &&>(rng))))
+              /* */ -> decltype(size(static_cast<Range &&>(rng)))
+            {
+                return size(static_cast<Range &&>(rng));
+            }
+
+            template<access_size_type Range>
+            [[nodiscard]] GSTD_STATIC constexpr auto operator()(Range && rng) GSTD_CONST //
+              noexcept(noexcept(std::distance(
+                access::begin_fn{}(static_cast<Range &&>(rng)),
+                access::end_fn{}(static_cast<Range &&>(rng))
+              )))
+              /* */ -> decltype(std::distance(
+                      access::begin_fn{}(static_cast<Range &&>(rng)),
+                      access::end_fn{}(static_cast<Range &&>(rng))
+                    ))
+            {
+                return std::distance(
+                  access::begin_fn{}(static_cast<Range &&>(rng)), access::end_fn{}(static_cast<Range &&>(rng))
+                );
+            }
+        };
+    }
+
     inline constexpr _impl::access::begin_fn begin;
     inline constexpr _impl::access::end_fn end;
     inline constexpr _impl::raccess::rbegin_fn rbegin;
     inline constexpr _impl::raccess::rend_fn rend;
-    // TODO size, ssize, empty, data
-    // reverse can fallback to std::reverse_iterator
+    inline constexpr _impl::size::size_fn size;
+    // TODO ssize, empty, data
 }
 
 #endif
