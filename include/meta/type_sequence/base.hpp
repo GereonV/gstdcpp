@@ -21,7 +21,7 @@ namespace gstd::meta::type_sequence {
     }
 
     template<typename T>
-    concept sequence_of_types = _impl::is_type_sequence<T>::value;
+    concept sequence_of_types = _impl::is_type_sequence_v<T>;
 }
 
 #endif

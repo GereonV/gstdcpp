@@ -15,7 +15,7 @@ namespace gstd::meta::type_sequence::_impl {
     };
 
     template<sequence_of_types Seq>
-    struct size : error_base<Seq> {};
+    struct size : error_base<size<Seq>> {};
 
     template<typename... Ts>
     struct size<type_sequence<Ts...>> : std::integral_constant<size_t, sizeof...(Ts)> {};
@@ -54,7 +54,7 @@ namespace gstd::meta::type_sequence::_impl {
     using get_t = get<Seq, N>::type;
 
     template<sequence_of_types Seq, template<typename> typename Proj>
-    struct mapped : error_base<Seq> {};
+    struct mapped : error_base<mapped<Seq, Proj>> {};
 
     template<typename... Ts, template<typename> typename Proj>
     struct mapped<type_sequence<Ts...>, Proj> : std::type_identity<type_sequence<typename Proj<Ts>::type...>> {};
@@ -87,7 +87,7 @@ namespace gstd::meta::type_sequence::_impl {
     using indices_t = indices<N>::type;
 
     template<sequence_of_types Seq, template<typename> typename Pred>
-    struct filter : error_base<Seq> {};
+    struct filter : error_base<filter<Seq, Pred>> {};
 
     template<typename... Ts, template<typename> typename Pred>
     struct filter<type_sequence<Ts...>, Pred>
@@ -106,11 +106,12 @@ namespace gstd::meta::type_sequence::_impl {
     using reversed_t = reversed<Seq>::type;
 
     template<sequence_of_types Seq>
-    struct contains_predicate {
+    struct contains_predicate : error_base<contains_predicate<Seq>> {};
+
+    template<typename... Ts>
+    struct contains_predicate<type_sequence<Ts...>> {
         template<typename T>
-          struct type : std::bool_constant < requires {
-            requires std::same_as<head_t<Seq>, T> || contains_predicate<tail_t<Seq>>::template type<T>::value;
-        } > {};
+        struct type : std::bool_constant<(std::same_as<T, Ts> || ...)> {};
     };
 
     template<sequence_of_types... Seqs>
@@ -161,13 +162,33 @@ namespace gstd::meta::type_sequence::_impl {
     using unique_t = unique<Seq>::type;
 
     template<template<typename, typename> typename Comp, typename T>
-    struct compare_predicate
-        : predicate::strict<predicate::from_lambda<[]<typename U> { return Comp<T, U>{}; }>::template type> {};
+    struct compare_predicate {
+        template<typename U>
+        struct type : Comp<T, U> {};
+    };
+
+    template<template<typename, typename> typename Comp, typename T, sequence_of_types Seq>
+    struct can_compare : error_base<can_compare<Comp, T, Seq>> {};
+
+    template<template<typename, typename> typename Comp, typename T, typename... Ts>
+      struct can_compare<Comp, T, type_sequence<Ts...>> : std::bool_constant <
+        (requires {
+        {
+            Comp<T, Ts>::value
+        } -> std::same_as<bool const &>; } && ...)
+     > {};
+
+    template<template<typename, typename> typename Comp, typename T, typename Seq>
+    concept can_compare_v = can_compare<Comp, T, Seq>::value;
 
     template<sequence_of_types Seq, template<typename, typename> typename Comp, typename T>
-    struct insert_sorted
+    struct insert_sorted {};
+
+    template<sequence_of_types Seq, template<typename, typename> typename Comp, typename T>
+    requires can_compare_v<Comp, T, Seq>
+    struct insert_sorted<Seq, Comp, T>
         : concat<
-            filter_t<Seq, predicate::inverted<compare_predicate<Comp, T>::template type>::template type>,
+            filter_t<Seq, predicate::negated<compare_predicate<Comp, T>::template type>::template type>,
             type_sequence<T>,
             filter_t<Seq, compare_predicate<Comp, T>::template type>> {};
 
@@ -175,7 +196,12 @@ namespace gstd::meta::type_sequence::_impl {
     using insert_sorted_t = insert_sorted<Seq, Comp, T>::type;
 
     template<sequence_of_types Seq, template<typename, typename> typename Comp, sequence_of_types Seq2>
-    struct insert_all_sorted : insert_all_sorted<insert_sorted_t<Seq, Comp, head_t<Seq2>>, Comp, tail_t<Seq2>> {};
+    struct insert_all_sorted {};
+
+    template<sequence_of_types Seq, template<typename, typename> typename Comp, sequence_of_types Seq2>
+    requires can_compare_v<Comp, head_t<Seq2>, Seq>
+    struct insert_all_sorted<Seq, Comp, Seq2>
+        : insert_all_sorted<insert_sorted_t<Seq, Comp, head_t<Seq2>>, Comp, tail_t<Seq2>> {};
 
     template<sequence_of_types Seq, template<typename, typename> typename Comp>
     struct insert_all_sorted<Seq, Comp, empty> : std::type_identity<Seq> {};
@@ -189,17 +215,25 @@ namespace gstd::meta::type_sequence::_impl {
     template<sequence_of_types Seq, template<typename, typename> typename Comp>
     using sort_t = sort<Seq, Comp>::type;
 
+    // this doesn't compile, even though it should afaik
+    //     template<sequence_of_types Seq, sequence_of_types... Seqs>
+    //     struct zip {};
+    // doesn't matter anyway when using zip_t, so we settle for this:
+    template<sequence_of_types Seq, typename... Seqs>
+    struct zip {
+        static_assert((sequence_of_types<Seqs> && ...));
+    };
+
     template<sequence_of_types Seq, sequence_of_types... Seqs>
     requires ((size_v<Seq> == size_v<Seqs>) && ...)
-    struct zip : concat<
-                   type_sequence<type_sequence<head_t<Seq>, head_t<Seqs>...>>,
-                   typename zip<tail_t<Seq>, tail_t<Seqs>...>::type> {};
+    struct zip<Seq, Seqs...> : concat<
+                                 type_sequence<type_sequence<head_t<Seq>, head_t<Seqs>...>>,
+                                 typename zip<tail_t<Seq>, tail_t<Seqs>...>::type> {};
 
-    template<sequence_of_types... Seqs>
+    template<std::same_as<empty>... Seqs>
     struct zip<empty, Seqs...> : std::type_identity<empty> {};
 
     template<sequence_of_types Seq, sequence_of_types... Seqs>
-    requires ((size_v<Seq> == size_v<Seqs>) && ...)
     using zip_t = zip<Seq, Seqs...>::type;
 
     // TODO reduce/accumulate/fold

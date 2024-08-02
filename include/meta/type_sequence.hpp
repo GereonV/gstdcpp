@@ -5,6 +5,9 @@
 #include "meta/type_sequence/impl.hpp"
 
 namespace gstd::meta::type_sequence {
+    template<size_t N>
+    using indices = _impl::indices_t<N>;
+
     template<sequence_of_types... Seqs>
     using concat = _impl::concat_t<Seqs...>;
 
@@ -18,7 +21,6 @@ namespace gstd::meta::type_sequence {
     using symmetric_difference = concat<difference<Seq1, Seq2>, difference<Seq2, Seq1>>;
 
     template<sequence_of_types Seq, sequence_of_types... Seqs>
-    requires ((_impl::size_v<Seq> == _impl::size_v<Seqs>) && ...)
     using zip = _impl::zip_t<Seq, Seqs...>;
 
     template<typename... Ts>
@@ -59,6 +61,8 @@ namespace gstd::meta::type_sequence {
 
         template<template<typename> typename Proj>
         using mapped = _impl::mapped_t<type_sequence, Proj>;
+
+        using enumerated = zip<indices<size>, type_sequence>;
     };
 }
 

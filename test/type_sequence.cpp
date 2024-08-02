@@ -18,6 +18,13 @@ struct Predicate<void> {};
 template<typename T, typename U>
 struct Comparator : std::bool_constant<sizeof(T) < sizeof(U)> {};
 
+template<typename T, typename U>
+struct PartialComparator : Comparator<T, U> {};
+
+template<typename T, typename U>
+requires std::same_as<T, void> || std::same_as<U, void>
+struct PartialComparator<T, U> {};
+
 template<typename T>
 struct Projection : std::type_identity<T *> {};
 
@@ -61,12 +68,14 @@ static_assert(std::same_as<empty::sorted<Comparator>, empty>);
 static_assert(std::same_as<type_sequence<void *, char>::sorted<Comparator>, type_sequence<char, void *>>);
 static_assert(std::same_as<seq::remove<void>::sorted<Comparator>, seq::remove<void>>);
 // seq::sorted<Comparator> doesn't compile
+// seq::sorted<PartialComparator> doesn't compile
 static_assert(std::same_as<seq2::mapped<Projection>, type_sequence<void *, void **, void const **>>);
 static_assert(std::same_as<
               zip<type_sequence<char, short>, type_sequence<int, long>, type_sequence<void, void *>>,
               type_sequence<type_sequence<char, int, void>, type_sequence<short, long, void *>>>);
+// zip<empty, type_sequence<int>, type_sequence<void>> doesn't compile
+// zip<type_sequence<void>, int, type_sequence<void>> doesn't compile
 // zip<type_sequence<char, short>, type_sequence<int, long>, type_sequence<void>> doesn't compile
-// zip<type_sequence<>, type_sequence<int>, type_sequence<void>> doesn't compile
-static_assert(std::same_as<zip<type_sequence<>, type_sequence<>, type_sequence<>>, type_sequence<>>);
+static_assert(std::same_as<zip<empty, empty, empty>, empty>);
 
 int main() {}
