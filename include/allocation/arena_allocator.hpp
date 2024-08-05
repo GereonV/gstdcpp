@@ -17,16 +17,14 @@ namespace gstd::allocation {
     template<allocator Alloc>
     class arena_allocator {
       public:
-        // TODO check whether this can be implicitly chosen (as casting for argument-passing for example)
         template<typename... Args>
-        constexpr arena_allocator(arena_size size, Args &&... args) //
+        explicit(sizeof...(Args) != 0) constexpr arena_allocator(arena_size size, Args &&... args) //
           noexcept(noexcept(Alloc{static_cast<Args &&>(args)...}))
             : /*        */ _alloc{static_cast<Args &&>(args)...}
             , _allocation{_alloc.allocate(size)}
             , _top{_allocation.ptr}
         {}
 
-        // TODO does this compile if Alloc doesn't support move-construction?
         constexpr arena_allocator(arena_allocator && other) //
           noexcept(noexcept(Alloc{std::move(other._alloc)}))
             : /*        */ _alloc{std::move(other._alloc)}
@@ -34,7 +32,6 @@ namespace gstd::allocation {
             , _top{std::exchange(other._top, nullptr)}
         {}
 
-        // TODO does this compile if Alloc doesn't support move-assignment?
         constexpr arena_allocator & operator=(arena_allocator && rhs) noexcept
         {
             clear();
@@ -73,20 +70,18 @@ namespace gstd::allocation {
         }
 
         // this is technically not guaranteed to work... :(
+        // could use implementation-defined total pointer ordering but that's not guaranteed to do the right thing either...
         // TODO maybe this should be preprocessor-guarded somehow?
         [[nodiscard]] constexpr bool owns(allocation_result allocation) const noexcept
         {
-            auto base = std::bit_cast<std::uintptr_t>(_allocation.ptr);
-            auto ptr  = std::bit_cast<std::uintptr_t>(allocation.ptr);
-#ifdef NDEBUG
-            // works because `allocation` has to be `.allocate()`-ed by some allocator and not `deallocate()`-ed yet
-            return base <= ptr && ptr < base + _allocation.size;
-#else
-            return base <= ptr && ptr + allocation.size <= base + _allocation.size;
-#endif
+            auto begin = std::bit_cast<std::uintptr_t>(_allocation.ptr);
+            auto end   = std::bit_cast<std::uintptr_t>(static_cast<char *>(_allocation.ptr) + _allocation.size);
+            auto ptr   = std::bit_cast<std::uintptr_t>(allocation.ptr);
+            // works because `allocation` has to be `.allocate()`-ed by some allocator and not `deallocate()`-ed yet ie. valid
+            return begin <= ptr && ptr < end;
         }
       private:
-        Alloc _alloc;
+        [[no_unique_address]] Alloc _alloc;
         allocation_result _allocation;
         void * _top;
     };
