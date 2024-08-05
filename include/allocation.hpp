@@ -5,7 +5,7 @@
 #include "allocation/base.hpp"
 #include "allocation/c_allocator.hpp"
 #include "allocation/create_destroy.hpp"
-// TODO fallback allocator
+#include "allocation/fallback_allocator.hpp"
 // TODO switch-based-on-size allocator
 // TODO switch-based-on-size allocator
 
