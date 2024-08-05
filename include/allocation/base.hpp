@@ -20,28 +20,23 @@ namespace gstd::allocation {
 
     template<typename Alloc>
     concept allocator = requires(Alloc a) {
-        { a.allocate(size_t{}) } -> std::same_as<allocation_result>;
-        { a.deallocate(allocation_result{nullptr, 0}) } -> std::same_as<void>;
-        requires noexcept(a.allocate(size_t{}));
-        requires noexcept(a.deallocate(allocation_result{nullptr, 0}));
+        { a.allocate(size_t{}) } noexcept -> std::same_as<allocation_result>;
+        { a.deallocate(allocation_result{nullptr, 0}) } noexcept -> std::same_as<void>;
     };
 
     template<typename Alloc>
     concept reallocating_allocator = allocator<Alloc> && requires(Alloc a) {
-        { a.reallocate(allocation_result{nullptr, 0}, size_t{}) } -> std::same_as<allocation_result>;
-        requires noexcept(a.reallocate(allocation_result{nullptr, 0}, size_t{}));
+        { a.reallocate(allocation_result{nullptr, 0}, size_t{}) } noexcept -> std::same_as<allocation_result>;
     };
 
     template<typename Alloc>
     concept ownership_aware_allocator = allocator<Alloc> && requires(Alloc const a) {
-        { a.owns(allocation_result{nullptr, 0}) } -> std::same_as<bool>;
-        requires noexcept(a.owns(allocation_result{nullptr, 0}));
+        { a.owns(allocation_result{nullptr, 0}) } noexcept -> std::same_as<bool>;
     };
 
     template<typename Alloc>
     concept stateless_allocator = std::is_default_constructible_v<Alloc> && allocator<Alloc const>
-                                  && (!reallocating_allocator<Alloc> || reallocating_allocator<Alloc const>)
-                                  && (!ownership_aware_allocator<Alloc> || ownership_aware_allocator<Alloc const>);
+                                  && (!reallocating_allocator<Alloc> || reallocating_allocator<Alloc const>);
 }
 
 #endif // GSTD_ALLOCATION_HPP
