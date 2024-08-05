@@ -3,6 +3,7 @@
 
 #include "meta/type_sequence/base.hpp"
 #include "meta/type_sequence/impl.hpp"
+#include "meta/type_sequence/sort.hpp"
 
 namespace gstd::meta::type_sequence {
     template<size_t N>
