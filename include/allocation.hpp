@@ -5,7 +5,6 @@
 #include "allocation/base.hpp"
 #include "allocation/c_allocator.hpp"
 #include "allocation/create_destroy.hpp"
-// TODO rename allocation.cpp
 // TODO fallback allocator
 // TODO switch-based-on-size allocator
 // TODO switch-based-on-size allocator
