@@ -41,14 +41,27 @@ struct S2 : c_allocator_type {
     S2(int, int &, int &&) noexcept {}
 };
 
-void test_fallback() noexcept
+void test_fallback_and_arena() noexcept
 {
     int i;
     fallback_allocator<S, S2> alloc; // = {} doesn't compile (explicit)
     fallback_allocator<S, S2> alloc2{
       std::piecewise_construct, std::forward_as_tuple(1, 2), std::forward_as_tuple(1, i, 3)
     };
-    destroy(alloc, create<int>(alloc, 17));
+    destroy(alloc, create<int>(alloc2, 17));
+
+    arena_allocator<S2> alloc3{arena_size{4 * sizeof(int)}}; // = {arena_size{1}} doesn't compile (explicit)
+    auto a1 = create<int>(alloc3, 17);
+    auto a2 = create<int>(alloc3, 17);
+    arena_allocator<S2> alloc4{std::move(alloc3)}; // {alloc3} doesn't compile (no copy)
+    auto a3 = create<int>(alloc4, 17);
+    auto a4 = create<int>(alloc4, 17);
+    auto a5 = create<int>(alloc4, 17);
+    assert(a1 && a2 && a3 && a4 && !a5); // just assume malloc(16) returns less than 20 bytes
+    destroy(alloc4, a1);
+    destroy(alloc4, a2);
+    destroy(alloc4, a3);
+    destroy(alloc4, a4);
 }
 
 int main()
@@ -60,4 +73,5 @@ int main()
     std::cout << "Reallocated 4100 bytes, got " << re.size << " @ " << re.ptr << '\n';
     alloc.deallocate(re);
     std::cout << "Deallocated\n";
+    test_fallback_and_arena();
 }
