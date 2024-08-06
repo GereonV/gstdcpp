@@ -36,7 +36,13 @@ namespace gstd::allocation {
 
     template<typename Alloc>
     concept stateless_allocator = std::is_default_constructible_v<Alloc> && allocator<Alloc const>
-                                  && (!reallocating_allocator<Alloc> || reallocating_allocator<Alloc const>);
+                                  && (!reallocating_allocator<Alloc> || reallocating_allocator<Alloc const>)
+                                  && requires(Alloc a, Alloc const & ca) {
+                                         Alloc{ca};           // copy construction
+                                         a = ca;              // copy assignment
+                                         Alloc{std::move(a)}; // move construction
+                                         a = std::move(a);    // move assignment
+                                     };
 }
 
 #endif // GSTD_ALLOCATION_HPP

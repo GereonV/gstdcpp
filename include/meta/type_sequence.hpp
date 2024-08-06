@@ -1,11 +1,18 @@
 #ifndef GSTD_META_TYPE_SEQUENCE_HPP
 #define GSTD_META_TYPE_SEQUENCE_HPP
 
+#include <concepts>
 #include "meta/type_sequence/base.hpp"
 #include "meta/type_sequence/impl.hpp"
 #include "meta/type_sequence/sort.hpp"
 
 namespace gstd::meta::type_sequence {
+    template<std::integral Int, Int... Ints>
+    using integer_sequence = type_sequence<std::integral_constant<Int, Ints>...>;
+
+    template<size_t... Ints>
+    using index_sequence = integer_sequence<size_t, Ints...>;
+
     template<size_t N>
     using indices = _impl::indices_t<N>;
 
