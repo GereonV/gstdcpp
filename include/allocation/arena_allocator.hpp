@@ -24,12 +24,12 @@ namespace gstd::allocation {
               arena_size size,
               Args &&... args
             ) noexcept(std::is_nothrow_constructible_v<Alloc, Args...>)
-                : _alloc{static_cast<Args &&>(args)...}, _allocation{_alloc.allocate(size)}
+                : _alloc(static_cast<Args &&>(args)...), _allocation{_alloc.allocate(size)}
             {}
 
             constexpr arena_allocator_base(arena_allocator_base && other
             ) noexcept(std::is_nothrow_constructible_v<Alloc, Alloc>)
-                : _alloc{std::move(other._alloc)}, _allocation{std::exchange(other._allocation, no_allocation)}
+                : _alloc(std::move(other._alloc)), _allocation{std::exchange(other._allocation, no_allocation)}
             {}
 
             constexpr arena_allocator_base & operator=(arena_allocator_base && rhs

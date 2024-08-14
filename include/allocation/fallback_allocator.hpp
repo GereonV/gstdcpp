@@ -16,14 +16,14 @@ namespace gstd::allocation {
       public:
         explicit(!utility::explicit_check::implicity_constructible_from<Primary> || !utility::explicit_check::implicity_constructible_from<Fallback>)
           fallback_allocator()
-          = default;
+        {}
 
         template<typename T = Primary, typename U = Fallback>
         constexpr fallback_allocator(
           T && primary,
           U && fallback
         ) noexcept(std::is_nothrow_constructible_v<Primary, T> && std::is_nothrow_constructible_v<Fallback, U>)
-            : _primary{static_cast<T &&>(primary)}, _fallback{static_cast<U &&>(fallback)}
+            : _primary(static_cast<T &&>(primary)), _fallback(static_cast<U &&>(fallback))
         {}
 
         // eg. usable with std::forward_as_tuple

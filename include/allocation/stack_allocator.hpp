@@ -9,11 +9,10 @@ namespace gstd::allocation {
         template<size_t N, size_t StartAlignment = 1>
         class stack_allocator_base {
           public:
-            stack_allocator_base()                             = default;
+            constexpr stack_allocator_base() noexcept {}
+
             stack_allocator_base(stack_allocator_base const &) = delete;
-            stack_allocator_base(stack_allocator_base &&)      = delete;
             void operator=(stack_allocator_base const &)       = delete;
-            void operator=(stack_allocator_base &&)            = delete;
           protected:
             constexpr allocation_result * get_allocation() const noexcept { return {_data, N}; }
           private:
@@ -25,6 +24,7 @@ namespace gstd::allocation {
     struct stack_allocator : _impl::stack_allocator_base<N, StartAlignment>,
                              _impl::buffer_allocator_base<stack_allocator<N, StartAlignment>> {
         friend _impl::buffer_allocator_base<stack_allocator<N, StartAlignment>>;
+        using _impl::stack_allocator_base<N, StartAlignment>::stack_allocator_base;
     };
 }
 

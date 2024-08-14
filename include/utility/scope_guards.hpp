@@ -57,7 +57,7 @@ namespace gstd::utility::scope_guards {
         template<int I>
         class scope_guard_base {
             static_assert(I == success || I == failure);
-          public:
+          protected:
             scope_guard_base() noexcept : _ex_count{std::uncaught_exceptions()} {}
 
             [[nodiscard]] bool should_execute() const noexcept
@@ -70,14 +70,14 @@ namespace gstd::utility::scope_guards {
 
         template<>
         class scope_guard_base<exit> {
-          public:
+          protected:
             [[nodiscard]] constexpr bool should_execute() const noexcept { return true; }
         };
     }
 
     template<typename F, int I>
     requires requires(F f) { f(); }
-    class [[nodiscard]] scope_guard : _impl::scope_guard_base<I> {
+    class [[nodiscard]] scope_guard : private _impl::scope_guard_base<I> {
       public:
         explicit constexpr scope_guard(F && f) : _f(static_cast<F &&>(f)) {}
 
