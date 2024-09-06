@@ -24,21 +24,21 @@ namespace gstd::meta::type_sequence::_impl {
     inline constexpr size_t size_v = size<Seq>::value;
 
     template<sequence_of_types Seq>
-    struct cons {
+    struct uncons {
         static_assert(size_v<Seq> == 0);
     };
 
     template<typename Head, typename... Tail>
-    struct cons<type_sequence<Head, Tail...>> {
+    struct uncons<type_sequence<Head, Tail...>> {
         using head = Head;
         using tail = type_sequence<Tail...>;
     };
 
     template<sequence_of_types Seq>
-    using head_t = cons<Seq>::head;
+    using head_t = uncons<Seq>::head;
 
     template<sequence_of_types Seq>
-    using tail_t = cons<Seq>::tail;
+    using tail_t = uncons<Seq>::tail;
 
     template<sequence_of_types Seq, size_t Idx>
     struct get : get<tail_t<Seq>, Idx - 1> {};

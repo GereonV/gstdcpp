@@ -39,6 +39,9 @@ namespace gstd::meta::type_sequence {
         template<size_t Idx>
         using get = _impl::get_t<type_sequence, Idx>;
 
+        using head = _impl::head_t<type_sequence>;
+        using tail = _impl::tail_t<type_sequence>;
+
         template<typename... Us>
         using append = concat<type_sequence, type_sequence<Us...>>;
 
@@ -72,6 +75,8 @@ namespace gstd::meta::type_sequence {
 
         using enumerated = zip<indices<size>, type_sequence>;
     };
+
+    // TODO insert at index
 }
 
 #endif
